@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Argus — Beta Admin</title>
+<style>
+  :root {
+    --bg: #171310; --card: #221c17; --card2: #2b241d; --ink: #efe7dc;
+    --muted: #a99d8e; --amber: #d9a441; --sage: #8aa876; --red: #d9776b;
+    --line: #3a3128;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 15px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif; padding: 16px; }
+  h1 { font-size: 1.25rem; margin-bottom: 2px; }
+  h1 span { color: var(--amber); }
+  .sub { color: var(--muted); font-size: 0.8rem; margin-bottom: 14px; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tabs button { background: var(--card); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; }
+  .tabs button.active { background: var(--amber); color: #201a12; border-color: var(--amber); font-weight: 600; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .card h2 { font-size: 0.95rem; margin-bottom: 10px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .stat .n { font-size: 1.6rem; font-weight: 700; color: var(--amber); }
+  .stat .l { font-size: 0.75rem; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; }
+  .pill.active { background: rgba(138,168,118,.18); color: var(--sage); }
+  .pill.invited { background: rgba(217,164,65,.15); color: var(--amber); }
+  .pill.revoked { background: rgba(217,119,107,.15); color: var(--red); }
+  button.act { background: var(--card2); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; font-size: 0.78rem; cursor: pointer; }
+  button.act.warn { color: var(--red); }
+  button.primary { background: var(--amber); color: #201a12; border: none; border-radius: 10px; padding: 8px 16px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+  input, select, textarea { background: var(--card2); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); padding: 8px 12px; font-size: 0.9rem; width: 100%; }
+  textarea { font-family: inherit; resize: vertical; margin-bottom: 8px; }
+  .row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 140px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; font-size: 0.83rem; }
+  .bar-row .label { width: 150px; color: var(--muted); flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-row .bar { height: 16px; background: var(--amber); border-radius: 4px; min-width: 2px; }
+  .bar-row.g .bar { background: var(--sage); }
+  .bar-row .val { color: var(--ink); font-weight: 600; }
+  .muted { color: var(--muted); font-size: 0.8rem; }
+  .mono { font-family: ui-monospace, monospace; }
+  .copybox { background: var(--card2); border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; font-size: 0.83rem; white-space: pre-wrap; margin-top: 10px; }
+  #login { max-width: 380px; margin: 12vh auto; }
+  .err { color: var(--red); font-size: 0.85rem; margin-top: 8px; }
+  .ok { color: var(--sage); font-size: 0.85rem; margin-top: 8px; }
+  .seg { display: flex; gap: 4px; margin-bottom: 10px; }
+  .seg button { background: var(--card2); border: 1px solid var(--line); color: var(--muted); border-radius: 8px; padding: 3px 10px; font-size: 0.78rem; cursor: pointer; }
+  .seg button.on { color: var(--amber); border-color: var(--amber); }
+  .scroll { overflow-x: auto; }
+  .chartbox { position: relative; height: 280px; }
+  .chartbox.sm { height: 220px; }
+  @media (max-width: 640px) { .bar-row .label { width: 100px; } td, th { padding: 6px 5px; } .chartbox { height: 240px; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+'use strict';
+
+// Chart.js brand defaults + a small registry so re-rendering a tab tears down
+// old canvases (Chart.js errors if a canvas is reused while still bound).
+const AMBER = '#E8A33D', SAGE = '#8FAE87', CLAY = '#D3654A', INK2 = '#a99d8e', LINE = '#3a3128';
+if (window.Chart) {
+  Chart.defaults.color = INK2;
+  Chart.defaults.font.family = "-apple-system, 'Segoe UI', Roboto, sans-serif";
+  Chart.defaults.borderColor = LINE;
+  Chart.defaults.plugins.legend.labels.boxWidth = 12;
+}
+const _charts = {};
+function chart(id, config) {
+  const el = document.getElementById(id);
+  if (!el || !window.Chart) return;
+  if (_charts[id]) _charts[id].destroy();
+  _charts[id] = new Chart(el, config);
+}
+function destroyCharts() { for (const k in _charts) { _charts[k].destroy(); delete _charts[k]; } }
+const SUPABASE_URL = 'https://rfbqgglbqmkoikgtjict.supabase.co';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmYnFnZ2xicW1rb2lrZ3RqaWN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NDM3MzEsImV4cCI6MjEwMDExOTczMX0.9fwpw6_azij5Z0Iycaz5cwcSikJfaGa7fW1HxigWcw4';
+const DOWNLOAD_URL = 'https://github.com/teofilusshaduka/opportunity-tracker-releases/releases/latest';
+const sb = window.supabase.createClient(SUPABASE_URL, ANON_KEY);
+
+const app = () => document.getElementById('app');
+let tab = 'testers';
+let windowDays = 14;
+let cache = {};
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtDay = iso => iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—';
+const fmtWhen = iso => {
+  if (!iso) return 'never';
+  const h = (Date.now() - new Date(iso)) / 36e5;
+  if (h < 1) return 'just now';
+  if (h < 24) return Math.round(h) + 'h ago';
+  return Math.round(h / 24) + 'd ago';
+};
+
+/* ------------------------------------------------------------ auth */
+
+async function main() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return renderLogin();
+  renderShell();
+  loadTab();
+}
+
+function renderLogin() {
+  app().innerHTML = `
+    <div id="login" class="card">
+      <h1>Argus <span>Beta Admin</span></h1>
+      <p class="sub">Sign in with your admin email — a magic link lands in your inbox.</p>
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="email">
+      <div style="height:10px"></div>
+      <button class="primary" id="send">Send magic link</button>
+      <div id="msg"></div>
+    </div>`;
+  document.getElementById('send').onclick = async () => {
+    const email = document.getElementById('email').value.trim();
+    const msg = document.getElementById('msg');
+    if (!email) { msg.className = 'err'; msg.textContent = 'Enter your email.'; return; }
+    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
+    msg.className = error ? 'err' : 'ok';
+    msg.textContent = error ? error.message : 'Link sent — check your inbox, then come back here.';
+  };
+}
+
+sb.auth.onAuthStateChange((event) => {
+  if (event === 'SIGNED_IN') { renderShell(); loadTab(); }
+  if (event === 'SIGNED_OUT') renderLogin();
+});
+
+/* ----------------------------------------------------------- shell */
+
+const TABS = { testers: 'Testers', activity: 'Activity', usage: 'Usage', funnel: 'Funnel', errors: 'Errors', feedback: 'Feedback', broadcast: 'Email' };
+
+function renderShell() {
+  app().innerHTML = `
+    <h1>Argus <span>Beta Admin</span></h1>
+    <p class="sub">Private beta command centre · <a href="#" id="signout" style="color:var(--muted)">sign out</a></p>
+    <div class="tabs">${Object.entries(TABS).map(([k, v]) =>
+      `<button data-tab="${k}" class="${k === tab ? 'active' : ''}">${v}</button>`).join('')}</div>
+    <div id="view"><p class="muted">Loading…</p></div>`;
+  document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+    tab = b.dataset.tab;
+    document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('active', x === b));
+    loadTab();
+  });
+  document.getElementById('signout').onclick = async (e) => { e.preventDefault(); await sb.auth.signOut(); };
+}
+
+const view = () => document.getElementById('view');
+
+async function loadTab() {
+  view().innerHTML = '<p class="muted">Loading…</p>';
+  destroyCharts();
+  try {
+    const since = new Date(Date.now() - windowDays * 864e5).toISOString().slice(0, 10);
+    const [testers, telemetry, errors, feedback] = await Promise.all([
+      sb.from('testers').select('*, devices(id, os, app_version, last_seen_at)').order('created_at', { ascending: false }),
+      sb.from('telemetry_daily').select('*').gte('day', since).order('day'),
+      sb.from('error_daily').select('*').gte('day', since),
+      tab === 'feedback' ? sb.from('feedback_mirror').select('*').order('created_at', { ascending: false }).limit(200) : Promise.resolve({ data: [] }),
+    ]);
+    for (const r of [testers, telemetry, errors, feedback]) if (r.error) throw r.error;
+    cache = { testers: testers.data, telemetry: telemetry.data, errors: errors.data, feedback: feedback.data };
+    ({ testers: vTesters, activity: vActivity, usage: vUsage, funnel: vFunnel, errors: vErrors, feedback: vFeedback, broadcast: vBroadcast })[tab]();
+  } catch (err) {
+    view().innerHTML = `<p class="err">${esc(err.message || err)}</p>
+      <p class="muted">If you just signed in on a new device, your session may need a refresh.</p>`;
+  }
+}
+
+function windowPicker() {
+  return `<div class="seg">${[7, 14, 30].map(d =>
+    `<button data-d="${d}" class="${d === windowDays ? 'on' : ''}">${d}d</button>`).join('')}</div>`;
+}
+function bindWindowPicker() {
+  document.querySelectorAll('.seg button').forEach(b => b.onclick = () => {
+    windowDays = parseInt(b.dataset.d, 10); loadTab();
+  });
+}
+
+function bars(entries, cls = '') {
+  const max = Math.max(1, ...entries.map(([, n]) => n));
+  return entries.map(([label, n]) =>
+    `<div class="bar-row ${cls}"><span class="label" title="${esc(label)}">${esc(label)}</span>
+     <div class="bar" style="width:${Math.round(n / max * 60)}%"></div>
+     <span class="val">${n}</span></div>`).join('') || '<p class="muted">Nothing yet.</p>';
+}
+
+/* --------------------------------------------------------- testers */
+
+const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0/O/1/I/L
+const rnd = n => Array.from(crypto.getRandomValues(new Uint8Array(n)), b => ALPHABET[b % ALPHABET.length]).join('');
+const newCode = () => `ARGUS-${rnd(4)}-${rnd(2)}`;
+
+function inviteMessage(code, name) {
+  return `Hi ${name || 'there'},\n\nYou're in the Argus private beta! 🎉\n\nArgus is my app for tracking jobs, scholarships and programmes, so you never miss a deadline. See what it does here: https://teofilusshaduka.github.io/opportunity-tracker-releases/\n\n1. Download it for Mac or Windows from that page.\n   (macOS: right-click the app and choose Open the first time. Windows: if SmartScreen appears, click "More info" then "Run anyway". The build isn't code-signed yet; that's expected during the beta.)\n2. Open it and enter your personal invite code: ${code}\n3. That's it. The app walks you through the rest.\n\nYour code is personal, please don't share it or the app with anyone.\n\nBreak things and tell me about them via the 💬 Feedback button!\n\nTeo`;
+}
+
+function vTesters() {
+  const t = cache.testers;
+  const active = t.filter(x => x.status === 'active').length;
+  const revoked = t.filter(x => x.status === 'revoked').length;
+  view().innerHTML = `
+    <div class="grid">
+      <div class="stat"><div class="n">${t.length}</div><div class="l">total invites</div></div>
+      <div class="stat"><div class="n">${active}</div><div class="l">activated</div></div>
+      <div class="stat"><div class="n">${t.filter(x => x.status === 'invited').length}</div><div class="l">not yet activated</div></div>
+      <div class="stat"><div class="n">${revoked}</div><div class="l">revoked</div></div>
+    </div>
+    <div class="card">
+      <h2>New invite</h2>
+      <div class="row">
+        <input id="inv-name" placeholder="Name (optional)">
+        <input id="inv-email" type="email" placeholder="Email (optional — binds at activation)">
+      </div>
+      <button class="primary" id="inv-go">Create invite code</button>
+      <div id="inv-out"></div>
+    </div>
+    <div class="card scroll">
+      <h2>Testers</h2>
+      <table><thead><tr><th>Tester</th><th>Code</th><th>Status</th><th>Devices</th><th>Last seen</th><th></th></tr></thead>
+      <tbody>${t.map(x => {
+        const seen = x.devices.map(d => d.last_seen_at).sort().pop();
+        const dev = x.devices.map(d => `${(d.os || '?').split(' ')[0]} · v${d.app_version || '?'}`).join('<br>') || '—';
+        return `<tr>
+          <td><strong>${esc(x.full_name || '—')}</strong><br><span class="muted">${esc(x.email || '')}</span></td>
+          <td class="mono">${esc(x.invite_code)}</td>
+          <td><span class="pill ${x.status}">${x.status}</span></td>
+          <td class="muted">${dev}</td>
+          <td class="muted">${fmtWhen(seen)}</td>
+          <td>${x.status === 'revoked'
+            ? `<button class="act" data-unrevoke="${x.id}">Restore</button>`
+            : `<button class="act warn" data-revoke="${x.id}">Revoke</button>`}
+            <button class="act" data-copy="${esc(x.invite_code)}" data-name="${esc(x.full_name || '')}">Copy invite</button></td>
+        </tr>`;
+      }).join('')}</tbody></table>
+    </div>`;
+
+  document.getElementById('inv-go').onclick = async () => {
+    const code = newCode();
+    const name = document.getElementById('inv-name').value.trim();
+    const email = document.getElementById('inv-email').value.trim();
+    const { error } = await sb.from('testers').insert({
+      invite_code: code, full_name: name || null, email: email || null });
+    const out = document.getElementById('inv-out');
+    if (error) { out.innerHTML = `<p class="err">${esc(error.message)}</p>`; return; }
+    out.innerHTML = `<p class="ok">Created <strong class="mono">${code}</strong>
+      <button class="act" id="copy-new">Copy invite message</button></p>
+      <div class="copybox">${esc(inviteMessage(code, name))}</div>`;
+    document.getElementById('copy-new').onclick = () =>
+      navigator.clipboard.writeText(inviteMessage(code, name));
+    cache.testers.unshift({ id: 'new', invite_code: code, full_name: name, email,
+      status: 'invited', devices: [], created_at: new Date().toISOString() });
+  };
+
+  view().querySelectorAll('[data-revoke]').forEach(b => b.onclick = async () => {
+    if (!confirm('Revoke this tester? Their app locks within a day (data stays on their device).')) return;
+    await sb.from('testers').update({ status: 'revoked', revoked_at: new Date().toISOString() }).eq('id', b.dataset.revoke);
+    loadTab();
+  });
+  view().querySelectorAll('[data-unrevoke]').forEach(b => b.onclick = async () => {
+    await sb.from('testers').update({ status: 'active', revoked_at: null }).eq('id', b.dataset.unrevoke);
+    loadTab();
+  });
+  view().querySelectorAll('[data-copy]').forEach(b => b.onclick = () =>
+    navigator.clipboard.writeText(inviteMessage(b.dataset.copy, b.dataset.name)));
+}
+
+/* -------------------------------------------------------- activity */
+
+function vActivity() {
+  const t = cache.testers;
+  const days = cache.telemetry;
+  const today = new Date().toISOString().slice(0, 10);
+  const seenToday = new Set(t.filter(x => x.devices.some(d => d.last_seen_at && d.last_seen_at.slice(0, 10) === today)).map(x => x.id));
+  const week = new Date(Date.now() - 7 * 864e5).toISOString();
+  const seenWeek = new Set(t.filter(x => x.devices.some(d => d.last_seen_at && d.last_seen_at >= week)).map(x => x.id));
+  const versions = {};
+  t.forEach(x => x.devices.forEach(d => { if (d.app_version) versions[`v${d.app_version}`] = (versions[`v${d.app_version}`] || 0) + 1; }));
+
+  const perDay = {};
+  days.forEach(r => { perDay[r.day] = (perDay[r.day] || new Set()).add(r.tester_id); });
+
+  view().innerHTML = `
+    <div class="grid">
+      <div class="stat"><div class="n">${seenToday.size}</div><div class="l">active today</div></div>
+      <div class="stat"><div class="n">${seenWeek.size}</div><div class="l">active last 7 days</div></div>
+      <div class="stat"><div class="n">${t.filter(x => x.status === 'active').length}</div><div class="l">activated testers</div></div>
+    </div>
+    <div class="card"><h2>Active testers per day (${windowDays}d) ${windowPicker()}</h2>
+      <div class="chartbox"><canvas id="c-activity"></canvas></div></div>
+    <div class="card"><h2>Version spread (devices)</h2>${bars(Object.entries(versions).sort())}</div>
+    <div class="card scroll"><h2>Last seen</h2>
+      <table><thead><tr><th>Tester</th><th>Last seen</th><th>Version</th></tr></thead><tbody>
+      ${t.filter(x => x.status !== 'revoked').map(x => {
+        const seen = x.devices.map(d => d.last_seen_at).sort().pop();
+        const ver = x.devices.map(d => d.app_version).filter(Boolean).sort().pop();
+        return `<tr><td>${esc(x.full_name || x.email || x.invite_code)}</td>
+          <td class="muted">${fmtWhen(seen)}</td><td class="muted">${ver ? 'v' + ver : '—'}</td></tr>`;
+      }).join('')}</tbody></table></div>`;
+  bindWindowPicker();
+
+  const labels = Object.keys(perDay).sort();
+  chart('c-activity', {
+    type: 'line',
+    data: { labels: labels.map(fmtDay), datasets: [{
+      label: 'Testers active', data: labels.map(d => perDay[d].size),
+      borderColor: SAGE, backgroundColor: 'rgba(143,168,118,.15)',
+      fill: true, tension: .35, pointRadius: 3, pointBackgroundColor: SAGE }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: LINE } },
+                x: { grid: { display: false } } } },
+  });
+}
+
+/* ----------------------------------------------------------- usage */
+
+const COUNTER_LABELS = {
+  opportunities_added: 'Opportunities captured', ai_drafts: 'AI drafts',
+  cv_matches: 'CV matches', discovery_scans: 'Discovery scans',
+  telegram_captures: 'Telegram captures', calendar_events: 'Calendar events',
+};
+
+function vUsage() {
+  const totals = {};
+  const perDay = {};
+  cache.telemetry.forEach(r => {
+    Object.entries(r.counters || {}).forEach(([k, n]) => {
+      totals[k] = (totals[k] || 0) + n;
+      perDay[r.day] = (perDay[r.day] || 0) + n;
+    });
+  });
+  view().innerHTML = `
+    <div class="card"><h2>Feature usage — all testers (${windowDays}d) ${windowPicker()}</h2>
+      <div class="chartbox"><canvas id="c-usage"></canvas></div></div>
+    <div class="card"><h2>Total actions per day</h2>
+      <div class="chartbox sm"><canvas id="c-usage-trend"></canvas></div></div>`;
+  bindWindowPicker();
+
+  const feats = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  chart('c-usage', {
+    type: 'bar',
+    data: { labels: feats.map(([k]) => COUNTER_LABELS[k] || k), datasets: [{
+      data: feats.map(([, n]) => n), backgroundColor: AMBER, borderRadius: 5, barThickness: 22 }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: LINE } },
+                y: { grid: { display: false } } } },
+  });
+  const days = Object.keys(perDay).sort();
+  chart('c-usage-trend', {
+    type: 'bar',
+    data: { labels: days.map(fmtDay), datasets: [{
+      data: days.map(d => perDay[d]), backgroundColor: 'rgba(143,168,118,.7)', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: LINE } },
+                x: { grid: { display: false } } } },
+  });
+}
+
+/* ---------------------------------------------------------- funnel */
+
+const FUNNEL_ORDER = ['inbox', 'pending', 'applied', 'interview', 'offer', 'rejected', 'expired'];
+
+function vFunnel() {
+  const latest = {};
+  cache.telemetry.forEach(r => {
+    if (r.funnel && (!latest[r.tester_id] || r.day > latest[r.tester_id].day)) latest[r.tester_id] = r;
+  });
+  const sums = {};
+  Object.values(latest).forEach(r => Object.entries(r.funnel).forEach(([k, n]) => sums[k] = (sums[k] || 0) + n));
+  const applied = (sums.applied || 0) + (sums.interview || 0) + (sums.offer || 0);
+  view().innerHTML = `
+    <div class="grid">
+      <div class="stat"><div class="n">${Object.values(sums).reduce((a, b) => a + b, 0)}</div><div class="l">opportunities tracked</div></div>
+      <div class="stat"><div class="n">${applied}</div><div class="l">reached applied+</div></div>
+      <div class="stat"><div class="n">${sums.offer || 0}</div><div class="l">offers 🎉</div></div>
+    </div>
+    <div class="card"><h2>Pipeline across all testers (latest snapshot each)</h2>
+      <div class="chartbox"><canvas id="c-funnel"></canvas></div></div>
+    <p class="muted">Counts only — the contents of testers' pipelines are never collected.</p>`;
+
+  const stages = FUNNEL_ORDER.filter(k => sums[k] !== undefined);
+  const palette = { inbox: INK2, pending: '#c79a55', applied: AMBER, interview: SAGE,
+                    offer: '#6fae5a', rejected: CLAY, expired: '#6b5c4a' };
+  chart('c-funnel', {
+    type: 'bar',
+    data: { labels: stages.map(s => s[0].toUpperCase() + s.slice(1)), datasets: [{
+      data: stages.map(s => sums[s] || 0),
+      backgroundColor: stages.map(s => palette[s] || AMBER), borderRadius: 6, barThickness: 40 }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: LINE } },
+                x: { grid: { display: false } } } },
+  });
+}
+
+/* ---------------------------------------------------------- errors */
+
+function vErrors() {
+  const byFp = {};
+  cache.errors.forEach(r => {
+    const e = byFp[r.fingerprint] || (byFp[r.fingerprint] = { count: 0, testers: new Set(), versions: new Set() });
+    e.count += r.count;
+    e.testers.add(r.tester_id);
+    if (r.app_version) e.versions.add('v' + r.app_version);
+  });
+  const rows = Object.entries(byFp).sort((a, b) => b[1].count - a[1].count);
+  view().innerHTML = `
+    <div class="card scroll"><h2>Crash fingerprints (${windowDays}d) ${windowPicker()}</h2>
+      ${rows.length ? `<table><thead><tr><th>Fingerprint</th><th>Count</th><th>Testers</th><th>Versions</th></tr></thead>
+      <tbody>${rows.map(([fp, e]) => `<tr><td class="mono">${esc(fp)}</td><td>${e.count}</td>
+        <td>${e.testers.size}</td><td class="muted">${[...e.versions].join(', ') || '—'}</td></tr>`).join('')}</tbody></table>`
+      : '<p class="muted">No errors reported. Suspiciously calm.</p>'}</div>`;
+  bindWindowPicker();
+}
+
+/* -------------------------------------------------------- feedback */
+
+function vFeedback() {
+  const names = {};
+  cache.testers.forEach(t => names[t.id] = t.full_name || t.email || t.invite_code);
+  view().innerHTML = `
+    <div class="card"><h2>Feedback (text mirror — screenshots arrive by email)</h2>
+      ${cache.feedback.length ? cache.feedback.map(f => `
+        <div style="border-bottom:1px solid var(--line);padding:10px 0">
+          <div class="muted">${esc(f.category || 'Feedback')} · ${esc(names[f.tester_id] || 'unknown')} ·
+            ${fmtWhen(f.created_at)} ${f.app_version ? '· v' + esc(f.app_version) : ''}</div>
+          <div>${esc(f.message)}</div>
+        </div>`).join('') : '<p class="muted">No feedback mirrored yet.</p>'}</div>`;
+}
+
+/* -------------------------------------------------------- broadcast */
+
+let bcAudience = 'active';
+
+function vBroadcast() {
+  const withEmail = cache.testers.filter(t => t.email);
+  const counts = { active: withEmail.filter(t => t.status === 'active').length, all: withEmail.length };
+  view().innerHTML = `
+    <div class="card"><h2>Email your testers</h2>
+      <div class="seg" id="bc-aud">
+        <button data-a="active" class="${bcAudience === 'active' ? 'on' : ''}">Active (${counts.active})</button>
+        <button data-a="all" class="${bcAudience === 'all' ? 'on' : ''}">Everyone with an email (${counts.all})</button>
+      </div>
+      <div class="row"><input id="bc-subject" placeholder="Subject" maxlength="200"></div>
+      <textarea id="bc-body" rows="10" placeholder="Write in plain text — a blank line starts a new paragraph.&#10;{{NAME}} becomes each tester's first name."></textarea>
+      <p class="muted">Sent one by one from principiaworks@gmail.com, wrapped in the Argus house style
+        (header and footer added automatically). Replies land in that inbox.</p>
+      <div style="height:8px"></div>
+      <button class="primary" id="bc-send">Send</button>
+      <div id="bc-out"></div>
+    </div>`;
+
+  document.querySelectorAll('#bc-aud button').forEach(b => b.onclick = () => {
+    bcAudience = b.dataset.a;
+    document.querySelectorAll('#bc-aud button').forEach(x => x.classList.toggle('on', x === b));
+  });
+
+  document.getElementById('bc-send').onclick = async () => {
+    const subject = document.getElementById('bc-subject').value.trim();
+    const text = document.getElementById('bc-body').value.trim();
+    const out = document.getElementById('bc-out');
+    const n = counts[bcAudience];
+    if (!subject || !text) { out.innerHTML = '<p class="err">Subject and message are both needed.</p>'; return; }
+    if (!n) { out.innerHTML = '<p class="err">No recipients in that group have an email address.</p>'; return; }
+    if (!confirm(`Send "${subject}" to ${n} tester${n === 1 ? '' : 's'}?`)) return;
+    const btn = document.getElementById('bc-send');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/broadcast`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: ANON_KEY,
+                   Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ audience: bcAudience, subject, text }),
+      });
+      const result = await resp.json().catch(() => ({}));
+      if (resp.ok && result.success) {
+        const failed = (result.failed || []).length;
+        out.innerHTML = `<p class="ok">Sent to ${result.sent} tester${result.sent === 1 ? '' : 's'}.` +
+          (failed ? ` <span class="err">${failed} failed: ${esc(result.failed.join(', '))}</span>` : '') + '</p>';
+        document.getElementById('bc-subject').value = '';
+        document.getElementById('bc-body').value = '';
+      } else {
+        out.innerHTML = `<p class="err">${esc(result.error || `HTTP ${resp.status}`)}</p>`;
+      }
+    } catch (err) {
+      out.innerHTML = `<p class="err">${esc(err.message || err)}</p>`;
+    }
+    btn.disabled = false; btn.textContent = 'Send';
+  };
+}
+
+main();
+</script>
+</body>
+</html>
