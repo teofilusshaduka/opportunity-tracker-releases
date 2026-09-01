@@ -3,6 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--
+  SEC-03. This page holds an admin session on a public origin, so it says
+  exactly what it is allowed to load and, more to the point, where it is
+  allowed to talk: connect-src is pinned to this one Supabase project, so
+  injected code has nowhere to send anything. script-src still needs
+  'unsafe-inline' for the block below; every value rendered from the database
+  goes through esc() (tester names and feedback text are untrusted input).
+  frame-ancestors is deliberately absent — it is ignored in a meta tag, and
+  GitHub Pages cannot set real headers.
+-->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'none';
+  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data:;
+  connect-src https://rfbqgglbqmkoikgtjict.supabase.co;
+  base-uri 'none';
+  form-action 'none';
+">
 <title>Argus — Beta Admin</title>
 <style>
   :root {
@@ -60,8 +79,17 @@
 </head>
 <body>
 <div id="app"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!--
+  Exact versions with integrity hashes: the floating @2 tag meant whatever
+  jsDelivr served became admin-session-level code, unverified. A tampered or
+  swapped response now fails the hash and simply doesn't execute.
+-->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js"
+        integrity="sha384-yiVMs0R/Jyz7OhoXa/DsEMUSBLjEhr/QJta2ONO+zB6I8/GmNg/7AUFrZmAJV7KV"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+        integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
+        crossorigin="anonymous"></script>
 <script>
 'use strict';
 
@@ -107,32 +135,160 @@ const fmtWhen = iso => {
 async function main() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return renderLogin();
-  renderShell();
-  loadTab();
+  return gateOnSecondFactor();
+}
+
+/* A magic link proves someone reached the inbox, and nothing more. Everything
+   past this point needs a second factor: aal2 or the console stays shut.
+   Enrolment lives here because the TOTP APIs are only reachable from a
+   signed-in client — there is no button for it in the Supabase dashboard. */
+async function gateOnSecondFactor() {
+  const { data: aal, error } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (error) { await sb.auth.signOut(); return renderLogin(); }
+  if (aal.currentLevel === 'aal2') { renderShell(); loadTab(); return; }
+
+  const { data: factors, error: listErr } = await sb.auth.mfa.listFactors();
+  if (listErr) { await sb.auth.signOut(); return renderLogin(); }
+  const verified = (factors.totp || []).find(f => f.status === 'verified');
+  return verified ? renderChallenge(verified) : renderEnrol(factors.totp || []);
+}
+
+function authShell(title, sub, body) {
+  app().innerHTML = `
+    <div id="login" class="card">
+      <h1>Argus <span>${title}</span></h1>
+      <p class="sub">${sub}</p>
+      ${body}
+      <div id="msg"></div>
+    </div>`;
+}
+
+async function renderEnrol(existing) {
+  authShell('Two-factor setup',
+    'One-time setup: pair an authenticator app before the console opens.',
+    '<p class="muted">Preparing your code…</p>');
+
+  // A half-finished attempt leaves an unverified factor behind, and Supabase
+  // refuses a fresh enrolment while one is sitting there.
+  for (const stale of existing.filter(f => f.status !== 'verified')) {
+    await sb.auth.mfa.unenroll({ factorId: stale.id });
+  }
+
+  const { data, error } = await sb.auth.mfa.enroll({
+    factorType: 'totp',
+    friendlyName: `Argus admin ${new Date().toISOString().slice(0, 10)}`,
+  });
+  if (error) {
+    authShell('Two-factor setup', 'Setup could not start.',
+      `<p class="err">${esc(error.message)}</p>
+       <button class="act" id="signout-alt">Sign out</button>`);
+    document.getElementById('signout-alt').onclick = () => sb.auth.signOut();
+    return;
+  }
+
+  authShell('Two-factor setup',
+    'Scan this with Google Authenticator, 1Password, or any TOTP app, then enter the six digits it shows.', `
+    <img src="${data.totp.qr_code}" alt="Two-factor setup QR code"
+         style="width:200px;height:200px;background:#fff;border-radius:12px;padding:8px;display:block;margin:0 auto 12px">
+    <p class="muted" style="text-align:center;margin-bottom:10px">Can't scan it? Enter this key by hand:<br>
+      <span class="mono">${esc(data.totp.secret)}</span></p>
+    <input id="code" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" maxlength="6">
+    <div style="height:10px"></div>
+    <button class="primary" id="verify">Confirm and open the console</button>
+    <div style="height:8px"></div>
+    <button class="act" id="signout-alt">Sign out</button>`);
+
+  document.getElementById('signout-alt').onclick = () => sb.auth.signOut();
+  wireCodeEntry(data.id, 'Setup could not be confirmed — check the code and try again.');
+}
+
+function renderChallenge(factor) {
+  authShell('Beta Admin', 'Enter the six-digit code from your authenticator app.', `
+    <input id="code" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" maxlength="6">
+    <div style="height:10px"></div>
+    <button class="primary" id="verify">Verify</button>
+    <div style="height:8px"></div>
+    <button class="act" id="signout-alt">Sign out</button>`);
+  document.getElementById('signout-alt').onclick = () => sb.auth.signOut();
+  wireCodeEntry(factor.id,
+    'That code was not accepted. Codes change every 30 seconds — try the current one.');
+}
+
+/* Enrolment and sign-in are the same shape: challenge a factor, verify a
+   code, land back in main() with an aal2 session. */
+function wireCodeEntry(factorId, failureMessage) {
+  const input = document.getElementById('code');
+  const button = document.getElementById('verify');
+  const msg = () => document.getElementById('msg');
+
+  const submit = async () => {
+    const code = (input.value || '').replace(/\D/g, '');
+    if (code.length !== 6) {
+      msg().className = 'err'; msg().textContent = 'Enter all six digits.'; return;
+    }
+    const label = button.textContent;
+    button.disabled = true; button.textContent = 'Checking…';
+    try {
+      const { data: challenge, error: challengeErr } = await sb.auth.mfa.challenge({ factorId });
+      if (challengeErr) throw challengeErr;
+      const { error: verifyErr } = await sb.auth.mfa.verify({
+        factorId, challengeId: challenge.id, code,
+      });
+      if (verifyErr) throw verifyErr;
+      await main();                      // the session is aal2 from here
+      return;
+    } catch (_) {
+      msg().className = 'err';
+      msg().textContent = failureMessage;
+      input.value = '';
+      input.focus();
+    }
+    button.disabled = false; button.textContent = label;
+  };
+
+  button.onclick = submit;
+  input.onkeydown = (e) => { if (e.key === 'Enter') submit(); };
+  input.focus();
+}
+
+/* Admin actions worth being able to reconstruct later. Append-only table, and
+   a logging failure must never block the action itself. */
+async function audit(action, detail) {
+  try { await sb.from('admin_audit').insert({ action, detail }); } catch (_) { /* non-blocking */ }
 }
 
 function renderLogin() {
-  app().innerHTML = `
-    <div id="login" class="card">
-      <h1>Argus <span>Beta Admin</span></h1>
-      <p class="sub">Sign in with your admin email — a magic link lands in your inbox.</p>
-      <input id="email" type="email" placeholder="you@example.com" autocomplete="email">
-      <div style="height:10px"></div>
-      <button class="primary" id="send">Send magic link</button>
-      <div id="msg"></div>
-    </div>`;
+  authShell('Beta Admin', 'Sign in with your admin email — a magic link lands in your inbox.', `
+    <input id="email" type="email" placeholder="you@example.com" autocomplete="email">
+    <div style="height:10px"></div>
+    <button class="primary" id="send">Send magic link</button>`);
   document.getElementById('send').onclick = async () => {
     const email = document.getElementById('email').value.trim();
     const msg = document.getElementById('msg');
     if (!email) { msg.className = 'err'; msg.textContent = 'Enter your email.'; return; }
-    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
-    msg.className = error ? 'err' : 'ok';
-    msg.textContent = error ? error.message : 'Link sent — check your inbox, then come back here.';
+    // shouldCreateUser:false — without it this box provisions an account for
+    // any address typed in, and makes the project send mail on demand.
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname },
+    });
+    // Same answer whether or not the address is known. With signups off,
+    // reporting "signups not allowed" would turn this box into an oracle for
+    // which addresses are admins. Genuine server faults still surface.
+    if (error && error.status >= 500) {
+      msg.className = 'err';
+      msg.textContent = esc(error.message);
+    } else {
+      msg.className = 'ok';
+      msg.textContent = 'If that address belongs to an admin, a link is on its way.';
+    }
   };
 }
 
 sb.auth.onAuthStateChange((event) => {
-  if (event === 'SIGNED_IN') { renderShell(); loadTab(); }
+  // Never straight to the shell: the gate re-checks assurance level, so a
+  // fresh magic-link session still has to clear its second factor.
+  if (event === 'SIGNED_IN') gateOnSecondFactor();
   if (event === 'SIGNED_OUT') renderLogin();
 });
 
@@ -253,6 +409,7 @@ function vTesters() {
       invite_code: code, full_name: name || null, email: email || null });
     const out = document.getElementById('inv-out');
     if (error) { out.innerHTML = `<p class="err">${esc(error.message)}</p>`; return; }
+    audit('invite_created', { invite_code: code, full_name: name || null, email: email || null });
     out.innerHTML = `<p class="ok">Created <strong class="mono">${code}</strong>
       <button class="act" id="copy-new">Copy invite message</button></p>
       <div class="copybox">${esc(inviteMessage(code, name))}</div>`;
@@ -265,10 +422,12 @@ function vTesters() {
   view().querySelectorAll('[data-revoke]').forEach(b => b.onclick = async () => {
     if (!confirm('Revoke this tester? Their app locks within a day (data stays on their device).')) return;
     await sb.from('testers').update({ status: 'revoked', revoked_at: new Date().toISOString() }).eq('id', b.dataset.revoke);
+    audit('tester_revoked', { tester_id: b.dataset.revoke });
     loadTab();
   });
   view().querySelectorAll('[data-unrevoke]').forEach(b => b.onclick = async () => {
     await sb.from('testers').update({ status: 'active', revoked_at: null }).eq('id', b.dataset.unrevoke);
+    audit('tester_restored', { tester_id: b.dataset.unrevoke });
     loadTab();
   });
   view().querySelectorAll('[data-copy]').forEach(b => b.onclick = () =>
@@ -488,6 +647,7 @@ function vBroadcast() {
       });
       const result = await resp.json().catch(() => ({}));
       if (resp.ok && result.success) {
+        audit('broadcast_sent', { audience: bcAudience, subject, recipients: result.sent });
         const failed = (result.failed || []).length;
         out.innerHTML = `<p class="ok">Sent to ${result.sent} tester${result.sent === 1 ? '' : 's'}.` +
           (failed ? ` <span class="err">${failed} failed: ${esc(result.failed.join(', '))}</span>` : '') + '</p>';
