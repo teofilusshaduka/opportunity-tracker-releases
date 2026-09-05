@@ -354,8 +354,23 @@ function bars(entries, cls = '') {
 /* --------------------------------------------------------- testers */
 
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0/O/1/I/L
-const rnd = n => Array.from(crypto.getRandomValues(new Uint8Array(n)), b => ALPHABET[b % ALPHABET.length]).join('');
-const newCode = () => `ARGUS-${rnd(4)}-${rnd(2)}`;
+// Rejection sampling: 256 % 31 != 0, so a plain modulo would make the first
+// eight letters roughly 4% likelier than the rest. Cheap to do properly.
+const rnd = (n) => {
+  const limit = 256 - (256 % ALPHABET.length);
+  let out = '';
+  while (out.length < n) {
+    for (const b of crypto.getRandomValues(new Uint8Array(n * 2))) {
+      if (b < limit) { out += ALPHABET[b % ALPHABET.length]; if (out.length === n) break; }
+    }
+  }
+  return out;
+};
+// SEC-05: eight random characters, not six — 31^8 (~8.5e11) against 31^6
+// (~8.9e8). Paired with the per-IP failure budget on activate, guessing one
+// stops being worth attempting. Older ARGUS-XXXX-XX codes still work; the
+// function matches whatever is stored against the tester.
+const newCode = () => `ARGUS-${rnd(4)}-${rnd(4)}`;
 
 function inviteMessage(code, name) {
   return `Hi ${name || 'there'},\n\nYou're in the Argus private beta! 🎉\n\nArgus is my app for tracking jobs, scholarships and programmes, so you never miss a deadline. See what it does here: https://teofilusshaduka.github.io/opportunity-tracker-releases/\n\n1. Download it for Mac or Windows from that page.\n   (macOS: right-click the app and choose Open the first time. Windows: if SmartScreen appears, click "More info" then "Run anyway". The build isn't code-signed yet; that's expected during the beta.)\n2. Open it and enter your personal invite code: ${code}\n3. That's it. The app walks you through the rest.\n\nYour code is personal, please don't share it or the app with anyone.\n\nBreak things and tell me about them via the 💬 Feedback button!\n\nTeo`;
