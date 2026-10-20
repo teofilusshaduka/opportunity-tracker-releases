@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy notice — Argus</title>
+<meta name="description" content="Exactly what Argus keeps on your computer, what leaves it, and what triggers each one.">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#100D0A" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#EFE7D6" media="(prefers-color-scheme: light)">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EFE7D6; --ink:#221C13; --ink-2:#6B5B46; --ink-3:#9C8A6F;
+    --gold:#93691C; --line:rgba(34,28,19,.13); --line-2:rgba(34,28,19,.24);
+    --btn:#221C13; --btn-ink:#F3ECDC; --card:rgba(255,252,244,.5);
+    --serif:'Cormorant Garamond',Georgia,serif; --sans:'Schibsted Grotesk',-apple-system,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){ :root{
+    --bg:#100D0A; --ink:#ECE3D2; --ink-2:#9C886A; --ink-3:#6C5B44;
+    --gold:#D9A441; --line:rgba(236,227,210,.12); --line-2:rgba(236,227,210,.2);
+    --btn:#ECE3D2; --btn-ink:#141009; --card:rgba(236,227,210,.035);
+  }}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65;
+    -webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:underline;text-underline-offset:2px;
+    text-decoration-color:var(--line-2);transition:text-decoration-color .2s}
+  a:hover{text-decoration-color:var(--ink)}
+  .wrap{max-width:720px;margin:0 auto;padding:0 24px}
+  ::selection{background:rgba(147,105,28,.2)}
+
+  nav{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 84%,transparent);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:66px;max-width:1080px}
+  .brand{font-family:var(--serif);font-weight:600;font-size:1.45rem;text-decoration:none}
+  .nav-links{display:flex;gap:22px;font-size:.88rem;color:var(--ink-2)}
+  .nav-links a{text-decoration:none}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a[aria-current]{color:var(--ink);font-weight:600}
+
+  header.page{padding:64px 0 34px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);
+    font-weight:600;display:block;margin-bottom:18px}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.3rem,5.5vw,3.3rem);
+    line-height:1.06;letter-spacing:-.015em}
+  .lede{color:var(--ink-2);margin-top:18px;font-size:1.06rem}
+  .stamp{margin-top:22px;font-size:.84rem;color:var(--ink-3)}
+  .stamp code{font-family:var(--sans);font-weight:600;color:var(--ink-2)}
+
+  /* a short table of contents — these pages are long and people arrive
+     looking for one specific answer */
+  .toc{margin:34px 0 0;padding:22px 24px;border:1px solid var(--line);border-radius:10px;
+    background:var(--card)}
+  .toc h2{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);
+    font-weight:600;margin-bottom:12px}
+  .toc ol{list-style:none;counter-reset:toc;display:grid;gap:7px}
+  .toc li{counter-increment:toc;font-size:.95rem;color:var(--ink-2);display:flex;gap:12px}
+  .toc li::before{content:counter(toc,decimal-leading-zero);color:var(--ink-3);
+    font-size:.76rem;font-weight:600;padding-top:3px;flex:none}
+  .toc a{text-decoration:none}
+  .toc a:hover{color:var(--ink)}
+
+  main{padding:8px 0 72px}
+  .legal-section{padding-top:44px}
+  .legal-section h2{font-family:var(--serif);font-weight:500;font-size:clamp(1.5rem,3.2vw,1.95rem);
+    line-height:1.18;letter-spacing:-.01em;margin-bottom:14px;scroll-margin-top:86px}
+  .legal-section p{margin-top:13px;color:var(--ink-2)}
+  .legal-section p:first-of-type{margin-top:0}
+  .legal-section strong{color:var(--ink);font-weight:600}
+  .legal-section em{font-style:italic}
+  .legal-section code{font-size:.9em;background:var(--card);border:1px solid var(--line);
+    border-radius:4px;padding:1px 5px}
+  .legal-section ul{margin-top:15px;list-style:none;display:grid;gap:11px}
+  .legal-section li{color:var(--ink-2);padding-left:20px;position:relative}
+  .legal-section li::before{content:'';position:absolute;left:3px;top:.68em;width:5px;height:5px;
+    border-radius:50%;background:var(--ink-3)}
+  .legal-note{margin-top:18px!important;padding:16px 20px;border-left:2px solid var(--gold);
+    background:var(--card);border-radius:0 8px 8px 0;color:var(--ink)!important}
+
+  footer{border-top:1px solid var(--line);padding:34px 0 46px;font-size:.86rem;color:var(--ink-3)}
+  footer .wrap{display:flex;gap:20px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+  footer a{text-decoration:none}
+  footer a:hover{color:var(--ink)}
+  .foot-links{display:flex;gap:20px;flex-wrap:wrap}
+  @media(max-width:560px){
+    .nav-links{gap:16px;font-size:.82rem}
+    header.page{padding:44px 0 28px}
+  }
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="index.html">Argus</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="release-notes.html">Releases</a>
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html" aria-current="page">Privacy</a>
+    </div>
+  </div>
+</nav>
+
+<header class="page">
+  <div class="wrap">
+    <span class="eyebrow">Private beta</span>
+    <h1>Privacy notice</h1>
+    <p class="lede">Argus is a local-first application: the substance of what you track never leaves your computer. This page lists every exception, what each one contains, and what makes it happen.</p>
+    <p class="stamp">Last updated 2026-09-21</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="toc" aria-label="On this page">
+    <h2>On this page</h2>
+    <ol><li><a href="#who">Who is responsible</a></li><li><a href="#short">The short version</a></li><li><a href="#stays">What stays on your computer</a></li><li><a href="#leaves">What leaves your computer, and what triggers it</a></li><li><a href="#ai">Your AI provider</a></li><li><a href="#never">What is never collected</a></li><li><a href="#keeping">How long any of it is kept</a></li><li><a href="#choices">What you can do about it</a></li><li><a href="#elsewhere">This website</a></li><li><a href="#age">Age</a></li><li><a href="#changes">Changes</a></li></ol>
+  </nav>
+</div>
+
+<main>
+  <div class="wrap"><section class="legal-section" id="who"><h2>Who is responsible</h2><p>Argus is made by Teofilus Shaduka, trading as Principia Works, in Namibia. For anything on this page — a question, a correction, a request to delete what I hold — write to <a href="mailto:principiaworks@gmail.com">principiaworks@gmail.com</a>.</p></section><section class="legal-section" id="short"><h2>The short version</h2><ul><li>Your opportunities, CVs, career memory, drafts, notes and API keys stay on your own machine. I have no copy and no way to get one.</li><li>I know your name and email, because you gave them when you redeemed your invite code. That is how the beta is run.</li><li>The app sends an anonymous count once a day — how many times a feature was used, never what it was used on.</li><li>The text of your CV and of the adverts you track goes to whichever AI provider <em>you</em> configured, under your own account with them. Choose a local model and it goes nowhere.</li><li>Everything you track can be exported as a zip, at any time, and deleted by deleting one folder.</li></ul></section><section class="legal-section" id="stays"><h2>What stays on your computer</h2><p>All of it, unless it appears in the next section. Specifically:</p><ul><li>Every opportunity, its advert text, your notes, stages and dates.</li><li>Your CVs and the documents you upload — <strong>encrypted at rest</strong> with a key held in your operating system's keychain.</li><li>Your career memory: jobs, qualifications, certificates, skills and the answers you've given on forms before.</li><li>Every draft email, tailored CV and cover letter.</li><li>Your API keys, mailbox app password and Telegram token — in the system keychain (Keychain on macOS, Credential Manager on Windows), not in a settings file, and never copied into the environment of a process Argus starts.</li></ul><p class="legal-note">Argus has no hosted tier for your application data, and adding one is explicitly out of scope for the project. There is no server of mine holding your job search.</p></section><section class="legal-section" id="leaves"><h2>What leaves your computer, and what triggers it</h2><p>Six flows. That is the complete list.</p><ul><li><strong>Activation — once.</strong> Your invite code, your name, your email, the terms version you accepted, your operating system and the app version go to the beta backend (Supabase) so the code can be redeemed and I know who is testing. You get back a random device token and a random tester ID. Everything after this is keyed to that ID, not to your name.</li><li><strong>The daily check-in — once a day, automatically.</strong> The device token, app version and operating system, plus: counts of features used that day; the same counts by hour; how many sessions you had and roughly how many minutes; how many opportunities sit at each stage (<em>numbers only</em>, never titles); the dates you first captured, first tailored a CV, first drafted and first applied; and crash fingerprints, which are an exception type and a module name — <code>TimeoutError@fetch</code> — with no message, no path and no data in them. This also tells the app whether your access is still active.</li><li><strong>Feedback — only when you send it.</strong> Your message and category, your app version, operating system and configured AI provider, and a screenshot if you attach one. An <em>error</em> report also carries the last 40 lines of the app's log with credentials masked. It travels through a Google Apps Script relay to my email and a spreadsheet.</li><li><strong>Your acceptance record — once.</strong> Your name, email, the timestamp and the terms version, through the same relay, so there is a register of who agreed to what and when.</li><li><strong>Update checks.</strong> Argus asks GitHub whether there is a newer release. GitHub sees a request, as it would for any download.</li></ul><p>Two more happen only if you set them up, and go to services that are already yours: your <strong>mailbox</strong> over IMAP, where Argus saves drafts and reads replies, and <strong>Telegram</strong>, if you connect your own bot. Argus also fetches the job boards and advert pages you ask it to, directly, as a browser would.</p></section><section class="legal-section" id="ai"><h2>Your AI provider</h2><p>This is the flow that carries the most personal data, so it gets its own section.</p><p>When you configure a cloud model, Argus sends that provider whatever the task needs. Tailoring a CV sends the CV. Writing a letter sends the CV, the advert and the relevant parts of your career memory. Filling a form sends the questions and the answers being drawn on. This goes under your own API key and your own agreement with <strong>Google (Gemini)</strong> or <strong>Anthropic (Claude)</strong>. Their privacy policy applies to it; mine cannot. It does not pass through any server of mine.</p><p class="legal-note">Pick a local model (Ollama) in <strong>Settings → AI &amp; models</strong> and none of that leaves your computer. It is set per capability, so you can keep your career memory local and still use a cloud model for prose. A capability assigned to a local model will not silently fall back to the cloud — if the local model is unavailable, the task fails instead.</p></section><section class="legal-section" id="never"><h2>What is never collected</h2><ul><li>The titles, descriptions, links or notes of anything you track.</li><li>Your CVs, or any text from them.</li><li>Your career memory.</li><li>Any draft email, cover letter or form answer.</li><li>Your API keys, passwords or tokens.</li><li>Your location, contacts, browsing history or anything on your machine outside Argus's own data folder.</li></ul><p>There is no advertising in Argus, no analytics SDK, no third-party tracker and no profiling. Nothing about you is sold or shared with anyone, at all.</p></section><section class="legal-section" id="keeping"><h2>How long any of it is kept</h2><ul><li><strong>On your computer:</strong> until you delete it. Nothing expires on its own.</li><li><strong>The daily counts:</strong> the app keeps seven days locally and discards older ones. On the backend they are kept for the beta and deleted when it ends.</li><li><strong>Your name, email and acceptance record:</strong> kept for as long as you are in the beta, and deleted when it ends or when you ask.</li><li><strong>Feedback:</strong> kept in my email and a spreadsheet while the bug is open, deleted on request.</li></ul></section><section class="legal-section" id="choices"><h2>What you can do about it</h2><ul><li><strong>Export everything</strong> — Settings → Privacy &amp; security → Export all my data. A zip, straight away, and it works from the locked screen too.</li><li><strong>Delete everything</strong> — delete the <code>.job_tracker</code> folder in your home directory. That is all of it.</li><li><strong>Send nothing to a cloud model</strong> — assign every capability to a local model in Settings → AI &amp; models.</li><li><strong>Disconnect an integration</strong> — mailbox and Telegram can each be disconnected in Settings, which removes the stored credential from your keychain.</li><li><strong>Ask me to delete what I hold</strong> — email <a href="mailto:principiaworks@gmail.com">principiaworks@gmail.com</a> and I will remove your name, email, acceptance record and counters from the backend, and confirm when it's done.</li></ul><p class="legal-note">The daily check-in cannot be turned off while you are in the beta: it is also the licence check that keeps the app unlocked. If that is not acceptable to you, the honest answer is not to join the beta.</p></section><section class="legal-section" id="elsewhere"><h2>This website</h2><p>The releases page is served by GitHub Pages, which sees the usual web-server request data. It loads fonts from Google Fonts, which sees your IP address, and asks GitHub's API which release is the latest so the download buttons point at the right files. There are no cookies, no analytics and no tracking pixel on it.</p></section><section class="legal-section" id="age"><h2>Age</h2><p>Argus is not intended for anyone under 16, and the beta is invited individually. If you believe someone under 16 has an invite, tell me and I will remove their record.</p></section><section class="legal-section" id="changes"><h2>Changes</h2><p>If what Argus sends ever changes, this page changes with it before the release that does it, and a change to what you are agreeing to means a new terms version and a fresh acceptance. The date at the top of this page is the last time it was revised.</p></section></div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Argus — private beta · Principia Works</span>
+    <span class="foot-links">
+      <a href="index.html">Home</a>
+      <a href="release-notes.html">Releases</a>
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="mailto:principiaworks@gmail.com">principiaworks@gmail.com</a>
+    </span>
+  </div>
+</footer>
+</body>
+</html>

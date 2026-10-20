@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Release notes — Argus</title>
+<meta name="description" content="Everything that changed in each version of Argus.">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#100D0A" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#EFE7D6" media="(prefers-color-scheme: light)">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EFE7D6; --ink:#221C13; --ink-2:#6B5B46; --ink-3:#9C8A6F;
+    --gold:#93691C; --line:rgba(34,28,19,.13); --line-2:rgba(34,28,19,.24);
+    --btn:#221C13; --btn-ink:#F3ECDC; --card:rgba(255,252,244,.5);
+    --serif:'Cormorant Garamond',Georgia,serif; --sans:'Schibsted Grotesk',-apple-system,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){ :root{
+    --bg:#100D0A; --ink:#ECE3D2; --ink-2:#9C886A; --ink-3:#6C5B44;
+    --gold:#D9A441; --line:rgba(236,227,210,.12); --line-2:rgba(236,227,210,.2);
+    --btn:#ECE3D2; --btn-ink:#141009; --card:rgba(236,227,210,.035);
+  }}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65;
+    -webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:underline;text-underline-offset:2px;
+    text-decoration-color:var(--line-2);transition:text-decoration-color .2s}
+  a:hover{text-decoration-color:var(--ink)}
+  .wrap{max-width:720px;margin:0 auto;padding:0 24px}
+  ::selection{background:rgba(147,105,28,.2)}
+
+  nav{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 84%,transparent);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:66px;max-width:1080px}
+  .brand{font-family:var(--serif);font-weight:600;font-size:1.45rem;text-decoration:none}
+  .nav-links{display:flex;gap:22px;font-size:.88rem;color:var(--ink-2)}
+  .nav-links a{text-decoration:none}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a[aria-current]{color:var(--ink);font-weight:600}
+
+  header.page{padding:64px 0 34px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);
+    font-weight:600;display:block;margin-bottom:18px}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.3rem,5.5vw,3.3rem);
+    line-height:1.06;letter-spacing:-.015em}
+  .lede{color:var(--ink-2);margin-top:18px;font-size:1.06rem}
+  .stamp{margin-top:22px;font-size:.84rem;color:var(--ink-3)}
+  .stamp code{font-family:var(--sans);font-weight:600;color:var(--ink-2)}
+
+  /* a short table of contents — these pages are long and people arrive
+     looking for one specific answer */
+  .toc{margin:34px 0 0;padding:22px 24px;border:1px solid var(--line);border-radius:10px;
+    background:var(--card)}
+  .toc h2{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);
+    font-weight:600;margin-bottom:12px}
+  .toc ol{list-style:none;counter-reset:toc;display:grid;gap:7px}
+  .toc li{counter-increment:toc;font-size:.95rem;color:var(--ink-2);display:flex;gap:12px}
+  .toc li::before{content:counter(toc,decimal-leading-zero);color:var(--ink-3);
+    font-size:.76rem;font-weight:600;padding-top:3px;flex:none}
+  .toc a{text-decoration:none}
+  .toc a:hover{color:var(--ink)}
+
+  main{padding:8px 0 72px}
+  .legal-section{padding-top:44px}
+  .legal-section h2{font-family:var(--serif);font-weight:500;font-size:clamp(1.5rem,3.2vw,1.95rem);
+    line-height:1.18;letter-spacing:-.01em;margin-bottom:14px;scroll-margin-top:86px}
+  .legal-section p{margin-top:13px;color:var(--ink-2)}
+  .legal-section p:first-of-type{margin-top:0}
+  .legal-section strong{color:var(--ink);font-weight:600}
+  .legal-section em{font-style:italic}
+  .legal-section code{font-size:.9em;background:var(--card);border:1px solid var(--line);
+    border-radius:4px;padding:1px 5px}
+  .legal-section ul{margin-top:15px;list-style:none;display:grid;gap:11px}
+  .legal-section li{color:var(--ink-2);padding-left:20px;position:relative}
+  .legal-section li::before{content:'';position:absolute;left:3px;top:.68em;width:5px;height:5px;
+    border-radius:50%;background:var(--ink-3)}
+  .legal-note{margin-top:18px!important;padding:16px 20px;border-left:2px solid var(--gold);
+    background:var(--card);border-radius:0 8px 8px 0;color:var(--ink)!important}
+
+  footer{border-top:1px solid var(--line);padding:34px 0 46px;font-size:.86rem;color:var(--ink-3)}
+  footer .wrap{display:flex;gap:20px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+  footer a{text-decoration:none}
+  footer a:hover{color:var(--ink)}
+  .foot-links{display:flex;gap:20px;flex-wrap:wrap}
+  @media(max-width:560px){
+    .nav-links{gap:16px;font-size:.82rem}
+    header.page{padding:44px 0 28px}
+  }
+
+  .release h2{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .release__date{font-family:var(--sans);font-size:.78rem;font-weight:500;color:var(--ink-3);
+    letter-spacing:.04em}
+  .release h3{font-family:var(--sans);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-3);font-weight:600;margin:26px 0 2px}
+  .release h3:first-of-type{margin-top:18px}
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="index.html">Argus</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="release-notes.html" aria-current="page">Releases</a>
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html">Privacy</a>
+    </div>
+  </div>
+</nav>
+
+<header class="page">
+  <div class="wrap">
+    <span class="eyebrow">Private beta</span>
+    <h1>Release notes</h1>
+    <p class="lede">What changed in each version, newest first. The app shows you a short version of this when you update; this is all of it.</p>
+    <p class="stamp"></p>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="toc" aria-label="On this page">
+    <h2>On this page</h2>
+    <ol><li><a href="#v0-12-0">v0.12.0</a></li><li><a href="#v0-11-0">v0.11.0</a></li><li><a href="#v0-10-5">v0.10.5</a></li><li><a href="#v0-10-2">v0.10.2</a></li><li><a href="#v0-10-1">v0.10.1</a></li><li><a href="#v0-10-0">v0.10.0</a></li><li><a href="#v0-9-1">v0.9.1</a></li><li><a href="#v0-9-0">v0.9.0</a></li></ol>
+  </nav>
+</div>
+
+<main>
+  <div class="wrap"><section class="legal-section release" id="v0-12-0"><h2>v0.12.0 <span class="release__date">2026-09-21</span></h2><h3>In short</h3><ul><li><strong>The phone app has been retired.</strong> To send Argus something from your phone, use the Telegram bot — it needs no pairing, no Tailscale, and your computer doesn&#x27;t have to be awake.</li><li><strong>Applications go as one PDF.</strong> Your CV, letter and documents are combined into a single file, named after the job, in an order you choose.</li><li><strong>Updates show up without restarting.</strong> Argus picks up changes when you reload instead of needing to be quit and reopened.</li></ul><h3>Everything in this release</h3><ul><li><strong>The phone app is gone</strong>, along with the Tailscale pairing it needed. It asked you to install Tailscale on two devices, sign in on both, and leave your computer awake — more setup than it was worth, and it was never as good as the desktop. If it comes back it will be as something that works without any of that. <strong>Telegram covers capturing on the go</strong>: forward a link, paste an advert, or send a photo of a poster, and Argus picks it up next time it runs.</li><li><strong>The beta terms are at v5.</strong> They used to say encrypted captures from your phone reach the server. Nothing of the sort leaves your machine now, so that sentence is gone. Read them in Settings → Privacy &amp; security.</li><li><strong>One PDF instead of five attachments.</strong> Everything you send with an application — CV, cover letter, transcripts, certificates — is combined into a single PDF named after the job, with a bookmark per document. Arrange the order in <strong>Documents to send</strong>, or switch it off there if an employer wants separate files. Anything that can&#x27;t be turned into pages still goes, as its own attachment, and Argus tells you which.</li><li><strong>Attachment names are readable again.</strong> They used to reach the recipient with a timestamp in front, like <code>094036-Teofilus…pdf</code>.</li><li><strong>Argus Fill tells you when it&#x27;s out of date.</strong> The button in your bookmarks bar carries its own copy of the script, so one saved months ago keeps running that month&#x27;s code. Argus now notices and asks you to reinstall it.</li></ul></section><section class="legal-section release" id="v0-11-0"><h2>v0.11.0 <span class="release__date">2026-09-19</span></h2><p>Argus now helps you apply, not just keep track — and it has a new look, on your</p><p>computer <strong>and</strong> on your phone.</p><h3>In short</h3><ul><li><strong>A new look, everywhere.</strong> The whole app has been redesigned, and your phone now runs the same Argus as your computer.</li><li><strong>Apply to many at once.</strong> Tick what you want, press Prepare, then review and send them one after another.</li><li><strong>It remembers your career.</strong> One record of your jobs, skills and qualifications — every letter and form answer comes from it.</li><li><strong>Help, where you are.</strong> A <strong>?</strong> on every page explains it, and there&#x27;s a short walkthrough the first time you open this version.</li><li><strong>Clearer about your data.</strong> The beta terms now spell out that Argus drafts and <em>you</em> send, and what a cloud AI model receives. Read them any time in Settings → Privacy &amp; security.</li></ul><h3>Everything in this release</h3><ul><li><strong>Your phone is a proper Argus now.</strong> Same look, same words, same data: Today, your list, Applications, Discover. Capture a poster with the camera or paste a link, swipe a card right when you&#x27;ve applied or left to snooze it, and put a finished application in your Drafts — all from the phone, with your computer at home. Tailoring a CV and editing your career memory stay on the computer, where there&#x27;s room for them, and the phone says so instead of pretending.</li><li><strong>One design everywhere.</strong> The setup wizard, the pairing screen, the lock screen and the form filler all match the app now. Light and dark follow your system, and changing the theme in one place changes it everywhere.</li><li><strong>Help, where you are.</strong> A <strong>?</strong> in the top bar explains whichever page you&#x27;re on — what it&#x27;s for, the two or three things you&#x27;d actually do there, and the one thing that surprises people. Smaller <strong>?</strong> marks sit beside the controls that need a sentence: Prepare, the match score, dismissed-versus-rejected, which model does what, app passwords, pairing. Press <strong>?</strong> for the keyboard shortcuts.</li><li><strong>Clearer about what you&#x27;re agreeing to.</strong> The beta terms now say plainly that Argus drafts and <em>you</em> check and send — that AI gets things wrong, and that anything you send goes out under your name. They also spell out that a cloud model means your CV and the advert go to Google or Anthropic under your own key, and that the builds aren&#x27;t code-signed yet. You can re-read the terms and a full privacy notice any time in <strong>Settings → Privacy &amp; security</strong>, or on the website.</li><li><strong>A new desktop design.</strong> Today shows what&#x27;s ready to send and what closes this week. Opportunities is a list you can tick through (with a board and a calendar too), Discover shows what Argus found and what it set aside, and Documents, Career, Activity and Settings each have their own page. Press ⌘K to search or run a command from anywhere.</li><li><strong>Apply to many at once.</strong> Tick the opportunities you want and choose <strong>Prepare</strong>. Argus gets them all ready in the background; <strong>Applications</strong> then walks you through each one to check and send, with J and K to move between them. Nothing is sent or marked applied until you say so.</li><li><strong>See what happened.</strong> The new <strong>Activity</strong> page lists captures, stage changes, prepared applications and replies, day by day.</li><li><strong>Your career memory.</strong> Argus keeps one record of your jobs, qualifications, certificates, skills and the answers you&#x27;ve given on forms, filled in from your CVs. Tell it news in plain words (&quot;I passed Security+ in August&quot;) and it adds it. Find it in <strong>Career</strong>.</li><li><strong>The right CV, every time.</strong> Say what each CV is for (tag it &quot;SOC analyst&quot;, &quot;graduate programme&quot;) and every card recommends which one to send, and why.</li><li><strong>Tailor a CV for each application.</strong> Argus suggests what to reword, lead with and leave out, using only what your CV and memory already say. Highlight any words and say how they should change. Nothing changes until you accept it, and your progress is saved if you get called away.</li><li><strong>Your CV, the way you made it.</strong> Tailoring shows your CV with its own fonts, bold, bullets, columns and layout, and you can edit any line right where it sits (⌘B, ⌘I and ⌘U work). A line Argus rewords keeps its formatting, and anything it adds looks like the lines around it. Upload your CV as a Word file (.docx) for this; a PDF has no layout to keep.</li><li><strong>Warned about missing fonts.</strong> If your CV uses a font your computer doesn&#x27;t have (Aptos, Word&#x27;s default, is the usual one), an amber note says so, because a stand-in font changes where lines break. Install the font in one click when Microsoft Office already has a copy, add a font file you&#x27;ve downloaded, or pick another font for that CV.</li><li><strong>Old PDF tailorings move to your Word CV.</strong> A tailoring you started from a PDF upload offers to move onto the Word version of that CV, bringing your edits with it and listing any it couldn&#x27;t place.</li><li><strong>PDFs that look like your CV.</strong> With LibreOffice installed (it&#x27;s free), ⬇ PDF makes the PDF from your own document. Without it, the print view now keeps your formatting too.</li><li><strong>Letters and emails that sound like you.</strong> Argus learns your spelling, rhythm, greeting and sign-off from letters you&#x27;ve written, and takes out the phrases that make writing read as machine-made.</li><li><strong>One tap from sent.</strong> Argus writes the email, attaches your CV and the documents the advert asks for, and puts it in your email&#x27;s <strong>Drafts</strong> folder (or opens it in Mail). It never sends anything; you do.</li><li><strong>Forms, filled.</strong> Argus answers application forms from your memory: in its own window, with a bookmark button in your browser, or from a pasted page. Anything it can&#x27;t know for sure, it leaves for you. Reads Microsoft Forms and other builders that hide the question behind a generic &quot;Single line text&quot; label.</li><li><strong>Posts that point somewhere else.</strong> When a post says &quot;full details on our website&quot;, Argus follows the link, past LinkedIn&#x27;s &quot;you&#x27;re leaving LinkedIn&quot; page, and reads only the vacancy the card is about. It also reads the poster attached to a post, where the deadline and the application link often are.</li><li><strong>Choose your AI, job by job.</strong> In <strong>Settings → AI &amp; models</strong>, pick a cloud model or one running on your own computer for each thing Argus does — or use a preset.</li><li><strong>Honest about what each choice costs you.</strong> A cloud model is billed to your own key by Google or Anthropic — Argus can&#x27;t see it and can&#x27;t cap it — so setup now says so, tells you what actually runs a bill up (preparing twenty applications at once is twenty tailored CVs and twenty letters), and points you at your provider&#x27;s own spending limit. A model on your own computer costs nothing but uses your hardware: Argus now checks every installed model against your computer&#x27;s memory and says plainly which ones are too big for it, rather than letting you pick one that will bring the machine to a halt.</li></ul></section><section class="legal-section release" id="v0-10-5"><h2>v0.10.5 <span class="release__date">2026-07-24</span></h2><p>Mac fix.</p><ul><li><strong>Intel Macs are supported again.</strong> There are now two Mac downloads — one for <strong>Apple Silicon</strong> (M1–M4) and one for <strong>Intel</strong> — so both open properly. Pick the one for your Mac (Apple menu → About This Mac tells you which chip you have). If macOS says it can’t check the app, open <strong>System Settings → Privacy &amp; Security</strong> and click <strong>Open Anyway</strong>.</li></ul></section><section class="legal-section release" id="v0-10-2"><h2>v0.10.2 <span class="release__date">2026-07-22</span></h2><p>Fixes from your feedback — thank you for sending it.</p><ul><li><strong>Clearer setup:</strong> the first screen now tells you exactly what’s missing (a valid email, your code) instead of leaving the button greyed out with no explanation.</li><li><strong>Phone pairing no longer sends you back to the start</strong> — you finish setup first, then pair in one tap from the <strong>📱 Phone</strong> button (in the header and Settings).</li><li><strong>Easier phone pairing on first use:</strong> if Tailscale needs sharing switched on, the app now shows you the one-time link instead of hanging.</li><li><strong>Snappier board:</strong> marking applied, committing, and deleting now respond instantly.</li><li><strong>Commit a date</strong> opens a proper little pop-up right where you are, not up at the top of the card.</li><li><strong>When something breaks,</strong> the app now says so in plain language and gives you a one-tap button to report it to me with the details I need.</li></ul></section><section class="legal-section release" id="v0-10-1"><h2>v0.10.1 <span class="release__date">2026-07-22</span></h2><p>A smoother Windows download.</p><ul><li><strong>Windows installs more easily:</strong> the Windows download now arrives as a <code>.zip</code> — unzip it, then run the <code>Setup</code> inside. This gets past an overly cautious browser warning that was blocking some downloads. Nothing changes on Mac.</li></ul></section><section class="legal-section release" id="v0-10-0"><h2>v0.10.0 <span class="release__date">2026-07-20</span></h2><p>Argus goes properly private, and gets a real Settings page.</p><ul><li><strong>Invite-only:</strong> Argus now activates with a personal invite code, so only people I&#x27;ve invited can use it. You enter it once during setup (or on next launch if you&#x27;re updating).</li><li><strong>A proper Settings page:</strong> tap ⚙ in the header to change your name and search details, swap your AI provider or key, adjust your goal and digest time, manage Telegram, and toggle start-at-login — all in one place.</li><li><strong>Export your data any time:</strong> one click in Settings gives you a full <code>.zip</code> of everything you&#x27;ve tracked.</li><li><strong>Honest about the little we send:</strong> to run the beta, Argus now sends anonymous daily usage counts (features used, pipeline totals, app version, crash types) — never the content of your opportunities, CVs, or keys. It&#x27;s all spelled out in Settings and the beta terms.</li></ul></section><section class="legal-section release" id="v0-9-1"><h2>v0.9.1 <span class="release__date">2026-07-14</span></h2><p>Meet <strong>Argus</strong> — same app, proper name. Plus a batch of fixes from early testing:</p><ul><li><strong>New name:</strong> the app is now called Argus.</li><li><strong>Smoother setup:</strong> the &quot;Test&quot; button on the API-key step now shows it&#x27;s working instead of sitting silent.</li><li><strong>Tidier calendar:</strong> once you mark something applied (or it expires), its deadline reminder is cleared automatically — no more clutter.</li><li><strong>Phone fix:</strong> the list no longer jumps back to the top after you act on a card.</li><li><strong>Better feedback:</strong> reports now always carry your app version and device info so issues are easier to fix.</li></ul></section><section class="legal-section release" id="v0-9-0"><h2>v0.9.0 <span class="release__date">2026-07-13</span></h2><p>The first beta! Everything is new, but here&#x27;s what you can do:</p><ul><li><strong>Capture anything</strong> — paste a link, some text, or a photo of a poster, and the app reads it and files it with the deadline.</li><li><strong>It nags you (nicely)</strong> — reminders before deadlines, a daily digest, and a weekly application goal with a streak.</li><li><strong>It writes with you</strong> — upload your CV once; the app picks the right version per opportunity and drafts your application. You always send it yourself.</li><li><strong>It hunts for you</strong> — a daily scan of job boards and opportunity sites, matched to what you told it you&#x27;re looking for.</li><li><strong>On your phone too</strong> — pair your phone in Settings and get the full app from your pocket.</li></ul></section></div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Argus — private beta · Principia Works</span>
+    <span class="foot-links">
+      <a href="index.html">Home</a>
+      <a href="release-notes.html">Releases</a>
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="mailto:principiaworks@gmail.com">principiaworks@gmail.com</a>
+    </span>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Argus private beta — terms — Argus</title>
+<meta name="description" content="The terms of the Argus private beta: what it does, what it does not promise, and what you are responsible for checking.">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#100D0A" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#EFE7D6" media="(prefers-color-scheme: light)">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EFE7D6; --ink:#221C13; --ink-2:#6B5B46; --ink-3:#9C8A6F;
+    --gold:#93691C; --line:rgba(34,28,19,.13); --line-2:rgba(34,28,19,.24);
+    --btn:#221C13; --btn-ink:#F3ECDC; --card:rgba(255,252,244,.5);
+    --serif:'Cormorant Garamond',Georgia,serif; --sans:'Schibsted Grotesk',-apple-system,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){ :root{
+    --bg:#100D0A; --ink:#ECE3D2; --ink-2:#9C886A; --ink-3:#6C5B44;
+    --gold:#D9A441; --line:rgba(236,227,210,.12); --line-2:rgba(236,227,210,.2);
+    --btn:#ECE3D2; --btn-ink:#141009; --card:rgba(236,227,210,.035);
+  }}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65;
+    -webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:underline;text-underline-offset:2px;
+    text-decoration-color:var(--line-2);transition:text-decoration-color .2s}
+  a:hover{text-decoration-color:var(--ink)}
+  .wrap{max-width:720px;margin:0 auto;padding:0 24px}
+  ::selection{background:rgba(147,105,28,.2)}
+
+  nav{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 84%,transparent);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:66px;max-width:1080px}
+  .brand{font-family:var(--serif);font-weight:600;font-size:1.45rem;text-decoration:none}
+  .nav-links{display:flex;gap:22px;font-size:.88rem;color:var(--ink-2)}
+  .nav-links a{text-decoration:none}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a[aria-current]{color:var(--ink);font-weight:600}
+
+  header.page{padding:64px 0 34px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);
+    font-weight:600;display:block;margin-bottom:18px}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.3rem,5.5vw,3.3rem);
+    line-height:1.06;letter-spacing:-.015em}
+  .lede{color:var(--ink-2);margin-top:18px;font-size:1.06rem}
+  .stamp{margin-top:22px;font-size:.84rem;color:var(--ink-3)}
+  .stamp code{font-family:var(--sans);font-weight:600;color:var(--ink-2)}
+
+  /* a short table of contents — these pages are long and people arrive
+     looking for one specific answer */
+  .toc{margin:34px 0 0;padding:22px 24px;border:1px solid var(--line);border-radius:10px;
+    background:var(--card)}
+  .toc h2{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);
+    font-weight:600;margin-bottom:12px}
+  .toc ol{list-style:none;counter-reset:toc;display:grid;gap:7px}
+  .toc li{counter-increment:toc;font-size:.95rem;color:var(--ink-2);display:flex;gap:12px}
+  .toc li::before{content:counter(toc,decimal-leading-zero);color:var(--ink-3);
+    font-size:.76rem;font-weight:600;padding-top:3px;flex:none}
+  .toc a{text-decoration:none}
+  .toc a:hover{color:var(--ink)}
+
+  main{padding:8px 0 72px}
+  .legal-section{padding-top:44px}
+  .legal-section h2{font-family:var(--serif);font-weight:500;font-size:clamp(1.5rem,3.2vw,1.95rem);
+    line-height:1.18;letter-spacing:-.01em;margin-bottom:14px;scroll-margin-top:86px}
+  .legal-section p{margin-top:13px;color:var(--ink-2)}
+  .legal-section p:first-of-type{margin-top:0}
+  .legal-section strong{color:var(--ink);font-weight:600}
+  .legal-section em{font-style:italic}
+  .legal-section code{font-size:.9em;background:var(--card);border:1px solid var(--line);
+    border-radius:4px;padding:1px 5px}
+  .legal-section ul{margin-top:15px;list-style:none;display:grid;gap:11px}
+  .legal-section li{color:var(--ink-2);padding-left:20px;position:relative}
+  .legal-section li::before{content:'';position:absolute;left:3px;top:.68em;width:5px;height:5px;
+    border-radius:50%;background:var(--ink-3)}
+  .legal-note{margin-top:18px!important;padding:16px 20px;border-left:2px solid var(--gold);
+    background:var(--card);border-radius:0 8px 8px 0;color:var(--ink)!important}
+
+  footer{border-top:1px solid var(--line);padding:34px 0 46px;font-size:.86rem;color:var(--ink-3)}
+  footer .wrap{display:flex;gap:20px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+  footer a{text-decoration:none}
+  footer a:hover{color:var(--ink)}
+  .foot-links{display:flex;gap:20px;flex-wrap:wrap}
+  @media(max-width:560px){
+    .nav-links{gap:16px;font-size:.82rem}
+    header.page{padding:44px 0 28px}
+  }
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="index.html">Argus</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="release-notes.html">Releases</a>
+      <a href="terms.html" aria-current="page">Terms</a>
+      <a href="privacy.html">Privacy</a>
+    </div>
+  </div>
+</nav>
+
+<header class="page">
+  <div class="wrap">
+    <span class="eyebrow">Private beta</span>
+    <h1>Beta terms</h1>
+    <p class="lede">Plain English, and short enough to actually read. By using Argus you agree to these terms and to the <a href="https://teofilusshaduka.github.io/opportunity-tracker-releases/privacy.html">privacy notice</a>.</p>
+    <p class="stamp">Version <code>v5</code> · in effect 2026-09-21</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="toc" aria-label="On this page">
+    <h2>On this page</h2>
+    <ol><li><a href="#what-this-is">What this is</a></li><li><a href="#you-send-it">Argus prepares. You check it and you send it.</a></li><li><a href="#not-advice">It isn't advice</a></li><li><a href="#no-guarantees">No guarantees, including about deadlines</a></li><li><a href="#your-data">Your data stays on your computer</a></li><li><a href="#ai-provider">Your AI provider is your own</a></li><li><a href="#unsigned">The builds are not code-signed</a></li><li><a href="#feedback">Feedback</a></li><li><a href="#ending">Ending it</a></li><li><a href="#as-is">As-is, and the limit of what I owe you</a></li><li><a href="#licence">The licence</a></li></ol>
+  </nav>
+</div>
+
+<main>
+  <div class="wrap"><section class="legal-section" id="what-this-is"><h2>What this is</h2><p>Argus is pre-release software in a private, invite-only beta. It is not finished. Things will break, and telling me when they do is the whole point of you being here.</p><p>Access is by personal invite code. Your code, the app and its builds are yours to use and nobody else's — please don't pass any of them on, publish screenshots or recordings, or describe how it works publicly without asking me first.</p></section><section class="legal-section" id="you-send-it"><h2>Argus prepares. You check it and you send it.</h2><p>This is the most important thing on this page, so it is near the top.</p><p>Argus drafts emails, tailors CVs, writes letters, answers application forms and reads deadlines out of adverts. It does all of that with large language models, which are confidently wrong some of the time. They misread dates. They smooth a fact into something that is no longer true. Occasionally they state something your CV never said.</p><ul><li><strong>Argus never sends anything.</strong> It leaves finished email in your Drafts folder and stops there. Pressing send is always a person's decision, and it is always yours.</li><li><strong>Argus never submits a form.</strong> The form filler fills fields in your browser. There is no Submit button in it, deliberately.</li><li><strong>Nothing is marked as applied on your behalf.</strong></li></ul><p class="legal-note">Check every CV, letter, form answer and closing date before you use it. Anything you send goes out under your name and is your responsibility, not mine — including anything Argus got wrong.</p></section><section class="legal-section" id="not-advice"><h2>It isn't advice</h2><p>Argus is a tracking and drafting tool. It is not a careers adviser, recruiter, immigration adviser, lawyer or financial adviser, and nothing it produces is professional advice of any kind.</p><p>Scholarships, fellowships, visas and funded programmes carry their own declarations and eligibility rules. Read them yourself. A match score is Argus's guess about relevance; it is not a judgement about whether you qualify, and it has no standing with the organisation you are applying to.</p></section><section class="legal-section" id="no-guarantees"><h2>No guarantees, including about deadlines</h2><p>I make no promise that Argus will find opportunities, that its scoring is right, that a draft is any good, or that using it leads to an interview or an offer.</p><p>Deadlines and reminders deserve their own sentence. Argus reads closing dates out of adverts, posters and pages, which means it can read them wrong, miss them entirely, or fail to remind you — a laptop asleep, a scheduler that didn't run, a notification the operating system swallowed. <strong>Argus is not a safety net for a deadline that matters.</strong> Confirm anything important against the advert itself.</p></section><section class="legal-section" id="your-data"><h2>Your data stays on your computer</h2><p>Everything you track lives in a database on your own machine. Your CVs are encrypted on disk and your API keys live in your operating system's keychain, not in a settings file. I have no copy of any of it and no way to read it.</p><p>A few things do leave your machine, and each one is listed — with what it contains and what triggers it — in the <a href="https://teofilusshaduka.github.io/opportunity-tracker-releases/privacy.html">privacy notice</a>. In short: an anonymous daily usage count, your name and email at activation so I know who is in the beta, and whatever you choose to put in a feedback report.</p></section><section class="legal-section" id="ai-provider"><h2>Your AI provider is your own</h2><p>Argus runs on an AI model that you choose and, for the cloud ones, pay for with your own API key. When you pick Google Gemini or Anthropic Claude, the text Argus needs the model to work on is sent to that company under <em>your</em> agreement with them, not mine — <strong>and that text includes your CV, your career memory, the advert, and the letters and form answers being written.</strong></p><p>Their terms and their privacy policy govern what they do with it. I don't see any of it and I'm not a party to it.</p><p><strong>The bill is yours too.</strong> Argus spends against your key and I have no visibility of it and no way to cap it. Gemini's free tier covers ordinary use; Claude is paid. The thing that runs a bill up is a large batch — preparing twenty applications at once is twenty tailored CVs and twenty letters. Set a spending limit in your provider's own console.</p><p class="legal-note">If you would rather no outside company ever saw your CV, point Argus at a model running on your own computer (Ollama) in <strong>Settings → AI &amp; models</strong>. Nothing leaves the machine in that mode. You can set it per capability, so your career memory can stay local while letters use a cloud model.</p><p><strong>A local model is not free either — it is paid for in hardware.</strong> The model has to fit in this computer's memory alongside everything else, and the work runs on its processor: long jobs mean full load for minutes at a time, loud fans, a warm machine and a fast-draining battery. A model too large for the memory available will make the whole computer unresponsive until it is stopped. Argus checks each installed model against your machine and says which ones do not fit, but the choice and its consequences are yours. Modern computers throttle themselves rather than come to harm; even so, run long jobs plugged in and not on a bed or a sofa.</p></section><section class="legal-section" id="unsigned"><h2>The builds are not code-signed</h2><p>An Apple Developer ID costs $99 a year and this project doesn't have a budget. So macOS will show a Gatekeeper warning the first time you open Argus, and Windows will show SmartScreen.</p><p>That is expected, and the installation instructions tell you how to get past it. It also means your operating system is not vouching for the build — you are trusting it because you know where it came from. Download it only from the official releases page.</p></section><section class="legal-section" id="feedback"><h2>Feedback</h2><p>Feedback you send reaches me by email and carries your app version, operating system and which AI provider you have configured, so a bug report is debuggable. An <em>error</em> report also attaches the last few lines of the app's log, with anything that looks like a credential masked out; ordinary feedback never does, because logs can mention pages you captured.</p><p>Ideas and suggestions you send me I may use to improve Argus, without obligation or payment. Nothing you send stops being yours.</p></section><section class="legal-section" id="ending"><h2>Ending it</h2><p>Either of us can end your access at any time and for any reason. I might, if the beta closes or a code is being shared; you might, by simply stopping.</p><p>If access ends, your data does not go anywhere — it is on your computer, and <strong>Settings → Privacy &amp; security</strong> will export all of it as a zip, including from the locked screen. Deleting the app's data folder removes it for good.</p></section><section class="legal-section" id="as-is"><h2>As-is, and the limit of what I owe you</h2><p>Argus is provided <strong>as is</strong>, with no warranty of any kind, express or implied, including merchantability, fitness for a particular purpose and non-infringement. It is pre-release software and it contains defects.</p><p>To the maximum extent the law allows, neither Principia Works nor Teofilus Shaduka is liable for any indirect, incidental, special or consequential loss arising from Argus or these terms — including a missed deadline, a rejected or withdrawn application, an error in a document Argus helped you write, lost data, or lost opportunity. Where liability cannot be excluded at all, it is limited to what you have paid to use Argus, which during the beta is nothing.</p><p>Nothing here takes away a right you have under the law of your own country that cannot be given up by agreement.</p></section><section class="legal-section" id="licence"><h2>The licence</h2><p>Argus is licensed, not sold. You get a personal, non-transferable, revocable licence to run it on machines you own or control, for evaluating it and giving feedback.</p><p>You may not redistribute it, sell it, sublicense it, reverse-engineer or decompile it, derive its prompts or internal workings, make derivative works, remove its notices, or use it to build a competing product. The full licence ships with the app in its <code>LICENSE</code> file, and it governs where these terms and it disagree. Open-source components keep their own licences.</p><p>Questions, or anything you need permission for: <a href="mailto:principiaworks@gmail.com">principiaworks@gmail.com</a>.</p></section></div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Argus — private beta · Principia Works</span>
+    <span class="foot-links">
+      <a href="index.html">Home</a>
+      <a href="release-notes.html">Releases</a>
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="mailto:principiaworks@gmail.com">principiaworks@gmail.com</a>
+    </span>
+  </div>
+</footer>
+</body>
+</html>

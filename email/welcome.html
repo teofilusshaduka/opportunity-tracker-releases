@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>Welcome to Argus</title>
+<!--
+  welcome.html — the tester welcome email, in the landing page's aesthetic.
+  Table-based + inline styles (email-safe); Cormorant Garamond loads where
+  supported (Apple Mail), Georgia everywhere else. Placeholders substituted
+  by the Apps Script relay before sending:
+    {{NAME}}      tester's first name (falls back to "there")
+    {{FORM_URL}}  Google Form for picking walkthrough times
+  The engraving is served from GitHub Pages (web/email/peacock.jpg published
+  alongside the landing page).
+-->
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  body, table, td { font-family: 'Schibsted Grotesk', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+  .serif { font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important; }
+  a { color: #221C13; }
+  @media (max-width: 640px) {
+    .container { width: 100% !important; }
+    .px { padding-left: 24px !important; padding-right: 24px !important; }
+    h1 { font-size: 34px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#EFE7D6;color:#221C13;-webkit-font-smoothing:antialiased;">
+
+<!-- preheader (hidden preview text) -->
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
+  Your invite is active. Here is everything Argus can do for you, plus an invitation to the live walkthrough.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#EFE7D6;">
+<tr><td align="center" style="padding:0 12px;">
+
+  <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;">
+
+    <!-- masthead -->
+    <tr><td class="px" align="center" style="padding:40px 48px 28px;border-bottom:1px solid #DFD7C6;">
+      <div class="serif" style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;letter-spacing:.01em;color:#221C13;">Argus</div>
+      <div style="font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#9C8A6F;font-weight:600;padding-top:8px;">Private beta &middot; Welcome</div>
+    </td></tr>
+
+    <!-- engraving -->
+    <tr><td class="px" align="center" style="padding:40px 48px 0;">
+      <img src="https://teofilusshaduka.github.io/opportunity-tracker-releases/email/peacock.jpg"
+           width="440" alt="Antique engraving of peacocks"
+           style="width:440px;max-width:100%;height:auto;display:block;border:0;">
+      <div class="serif" style="font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:15px;color:#9C8A6F;padding-top:10px;">Argus, the watchman of a hundred eyes.</div>
+    </td></tr>
+
+    <!-- headline + greeting -->
+    <tr><td class="px" align="center" style="padding:30px 48px 0;">
+      <h1 class="serif" style="font-family:Georgia,'Times New Roman',serif;font-weight:500;font-size:40px;line-height:1.05;letter-spacing:-.015em;margin:0;color:#221C13;">Welcome aboard.</h1>
+    </td></tr>
+    <tr><td class="px" style="padding:24px 48px 0;font-size:16px;line-height:1.65;color:#221C13;">
+      <p style="margin:0 0 16px;">Hi {{NAME}},</p>
+      <p style="margin:0 0 16px;">Your invite code is in, your copy of Argus is active, and from this moment it is watching the deadlines so you don&rsquo;t have to. You are one of a small group of testers shaping it before anyone else gets in. Thank you for being here.</p>
+      <p style="margin:0;">Here is what your new watchman can do.</p>
+    </td></tr>
+
+    <!-- capability tour -->
+    <tr><td class="px" style="padding:36px 48px 0;">
+      <div style="font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#9C8A6F;font-weight:600;padding-bottom:6px;">What it does</div>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="padding:20px 0;border-bottom:1px solid #DFD7C6;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td width="44" valign="top" class="serif" style="font-family:Georgia,serif;font-size:17px;color:#93691C;letter-spacing:.1em;">01</td>
+            <td>
+              <div class="serif" style="font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:20px;color:#221C13;">Capture in seconds</div>
+              <div style="font-size:15px;line-height:1.6;color:#6B5B46;padding-top:4px;">Paste a link, drop a screenshot, or forward a posting from your phone through the Telegram bot. Argus reads the details (role, organisation, deadline, requirements) and files them for you.</div>
+            </td>
+          </tr></table>
+        </td></tr>
+
+        <tr><td style="padding:20px 0;border-bottom:1px solid #DFD7C6;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td width="44" valign="top" class="serif" style="font-family:Georgia,serif;font-size:17px;color:#93691C;letter-spacing:.1em;">02</td>
+            <td>
+              <div class="serif" style="font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:20px;color:#221C13;">Never miss a deadline</div>
+              <div style="font-size:15px;line-height:1.6;color:#6B5B46;padding-top:4px;">Every opportunity lands on a timeline with reminders, a daily digest at the hour you choose, and a weekly application goal that keeps a streak going. Deadlines can go straight to your calendar.</div>
+            </td>
+          </tr></table>
+        </td></tr>
+
+        <tr><td style="padding:20px 0;border-bottom:1px solid #DFD7C6;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td width="44" valign="top" class="serif" style="font-family:Georgia,serif;font-size:17px;color:#93691C;letter-spacing:.1em;">03</td>
+            <td>
+              <div class="serif" style="font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:20px;color:#221C13;">Apply in your voice</div>
+              <div style="font-size:15px;line-height:1.6;color:#6B5B46;padding-top:4px;">Give Argus your CV once, several versions if you have them, and it drafts each application around your real experience, matching the right CV to the right role.</div>
+            </td>
+          </tr></table>
+        </td></tr>
+
+        <tr><td style="padding:20px 0;border-bottom:1px solid #DFD7C6;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td width="44" valign="top" class="serif" style="font-family:Georgia,serif;font-size:17px;color:#93691C;letter-spacing:.1em;">04</td>
+            <td>
+              <div class="serif" style="font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:20px;color:#221C13;">New openings, found for you</div>
+              <div style="font-size:15px;line-height:1.6;color:#6B5B46;padding-top:4px;">Once a day Argus goes hunting: it scans for jobs, scholarships and programmes that fit what you told it you&rsquo;re after, and brings back the ones worth your time.</div>
+            </td>
+          </tr></table>
+        </td></tr>
+
+        <tr><td style="padding:20px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td width="44" valign="top" class="serif" style="font-family:Georgia,serif;font-size:17px;color:#93691C;letter-spacing:.1em;">05</td>
+            <td>
+              <div class="serif" style="font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:20px;color:#221C13;">Yours, on your machine</div>
+              <div style="font-size:15px;line-height:1.6;color:#6B5B46;padding-top:4px;">Everything you track lives on your own computer, never on a server you don&rsquo;t control. During the beta Argus sends anonymous usage counts so we can improve it, and never the contents of anything you track. Settings &rarr; Export hands you all your data any time.</div>
+            </td>
+          </tr></table>
+        </td></tr>
+      </table>
+    </td></tr>
+
+    <!-- walkthrough invitation -->
+    <tr><td class="px" style="padding:36px 48px 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #CBBFA5;border-radius:10px;background-color:#F5EFE1;">
+        <tr><td align="center" style="padding:32px 36px;">
+          <div style="font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#93691C;font-weight:600;">Live walkthrough</div>
+          <div class="serif" style="font-family:Georgia,'Times New Roman',serif;font-weight:500;font-size:27px;line-height:1.15;color:#221C13;padding-top:10px;">See it all, live, in under an hour.</div>
+          <div style="font-size:15px;line-height:1.65;color:#6B5B46;padding-top:12px;text-align:left;">
+            This week I&rsquo;m hosting a group session on Google Meet: a tour of everything above, the shortcuts that make it fast, and time for your questions. There are two candidate times, <strong style="color:#221C13;">Thursday 23&nbsp;July at 8pm</strong> or <strong style="color:#221C13;">Saturday 25&nbsp;July at 11am</strong> (Windhoek time), and the session runs once, at whichever time more of you can make.
+          </div>
+          <div style="font-size:15px;line-height:1.65;color:#6B5B46;padding-top:12px;text-align:left;">
+            Vote for the time that works for you (it takes ten seconds) and the Meet link will follow once the count is in.
+          </div>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;"><tr>
+            <td style="background-color:#221C13;border-radius:6px;">
+              <a href="{{FORM_URL}}" style="display:inline-block;padding:13px 28px;font-size:15px;font-weight:600;color:#F3ECDC;text-decoration:none;">Pick your time</a>
+            </td>
+          </tr></table>
+        </td></tr>
+      </table>
+    </td></tr>
+
+    <!-- what we ask of testers -->
+    <tr><td class="px" style="padding:36px 48px 0;font-size:16px;line-height:1.65;color:#221C13;">
+      <div style="font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#9C8A6F;font-weight:600;padding-bottom:12px;">One thing we ask</div>
+      <p style="margin:0 0 16px;">Use Argus for your real search, and when something delights you, confuses you, or breaks, tell us. The <strong>Send feedback</strong> button inside the app takes a note and an optional screenshot straight to my desk; it&rsquo;s the single most valuable thing a beta tester can do.</p>
+      <p style="margin:0;">And for anything else, just reply to this email. A person reads it, and that person is me.</p>
+    </td></tr>
+
+    <!-- sign-off -->
+    <tr><td class="px" style="padding:32px 48px 0;font-size:16px;line-height:1.65;color:#221C13;">
+      <p style="margin:0;">Happy hunting,</p>
+      <p class="serif" style="font-family:Georgia,'Times New Roman',serif;font-size:21px;margin:6px 0 0;">Teo</p>
+      <p style="margin:2px 0 0;font-size:14px;color:#6B5B46;">maker of Argus</p>
+    </td></tr>
+
+    <!-- footer -->
+    <tr><td class="px" align="center" style="padding:40px 48px 48px;">
+      <div style="border-top:1px solid #DFD7C6;padding-top:24px;">
+        <div class="serif" style="font-family:Georgia,'Times New Roman',serif;font-size:17px;color:#6B5B46;">Argus</div>
+        <div style="font-size:12px;color:#9C8A6F;padding-top:6px;line-height:1.7;">
+          Private beta &middot; <a href="mailto:principiaworks@gmail.com" style="color:#9C8A6F;">principiaworks@gmail.com</a><br>
+          You&rsquo;re receiving this because you activated an Argus beta invite.
+        </div>
+      </div>
+    </td></tr>
+
+  </table>
+
+</td></tr>
+</table>
+</body>
+</html>

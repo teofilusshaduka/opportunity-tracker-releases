@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Send to Argus</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#171310">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Send to Argus">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="../icon-192.png">
+<!--
+  connect-src is pinned to the relay. Nothing else is reachable from this page,
+  and the mailbox key never leaves it: the key lives in the URL fragment, which
+  browsers do not send to any server, and everything posted is already
+  encrypted here before it goes anywhere.
+-->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'none';
+  script-src 'self' 'unsafe-inline';
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: blob:;
+  connect-src https://rfbqgglbqmkoikgtjict.supabase.co;
+  manifest-src 'self';
+  base-uri 'none';
+  form-action 'none';
+">
+<style>
+  :root {
+    --ground: #171310; --card: #221c17; --line: #3a3128;
+    --ink: #F3EADA; --muted: #A99D8E; --amber: #E8A33D; --sage: #8FAE87;
+    --clay: #D9776B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100dvh; background: var(--ground); color: var(--ink);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex; flex-direction: column;
+    padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+  }
+  header { margin-bottom: 22px; }
+  h1 { font: 600 1.45rem/1.2 Georgia, "Times New Roman", serif; margin: 0 0 4px; }
+  h1 span { color: var(--amber); }
+  .sub { color: var(--muted); font-size: .88rem; margin: 0; }
+  main { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+  textarea {
+    width: 100%; min-height: 140px; resize: vertical;
+    background: var(--card); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 14px; padding: 14px;
+    font: inherit;
+  }
+  textarea::placeholder { color: var(--muted); }
+  .row { display: flex; gap: 10px; }
+  button {
+    font: inherit; font-weight: 600; border-radius: 999px; border: 0;
+    padding: 15px 20px; cursor: pointer; flex: 1;
+    background: var(--amber); color: #201a12;
+  }
+  button.ghost {
+    background: transparent; color: var(--ink);
+    border: 1px solid var(--line); font-weight: 500;
+  }
+  button:disabled { opacity: .55; }
+  #msg { font-size: .9rem; min-height: 1.4em; margin: 0; }
+  #msg.ok { color: var(--sage); }
+  #msg.err { color: var(--clay); }
+  .note {
+    margin-top: auto; padding-top: 18px; color: var(--muted);
+    font-size: .78rem; line-height: 1.5; border-top: 1px solid var(--line);
+  }
+  .queued { color: var(--amber); }
+  input[type=file] { display: none; }
+  .setup { background: var(--card); border: 1px solid var(--line);
+           border-radius: 14px; padding: 18px; }
+  .setup ol { padding-left: 20px; margin: 10px 0 0; color: var(--muted); }
+  .setup li { margin-bottom: 7px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Send to <span>Argus</span></h1>
+  <p class="sub" id="sub">Paste a link, some text, or a photo of a poster.</p>
+</header>
+
+<main id="main"></main>
+
+<script>
+'use strict';
+
+const RELAY = 'https://rfbqgglbqmkoikgtjict.supabase.co/functions/v1/relay';
+const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmYnFnZ2xicW1rb2lrZ3RqaWN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NDM3MzEsImV4cCI6MjEwMDExOTczMX0.9fwpw6_azij5Z0Iycaz5cwcSikJfaGa7fW1HxigWcw4';
+const STORE = 'argus-capture-v1';
+const OUTBOX = 'argus-capture-outbox-v1';
+
+const $ = (id) => document.getElementById(id);
+const main = () => $('main');
+
+/* ------------------------------------------------------------- pairing */
+
+function readPairingFromFragment() {
+  // The fragment is where the key lives precisely because browsers never put
+  // it in a request line — no server, log or proxy ever sees it.
+  const raw = location.hash.replace(/^#/, '');
+  if (!raw) return null;
+  const params = new URLSearchParams(raw);
+  const address = params.get('a'), key = params.get('k');
+  if (!address || !key) return null;
+  return { address, key };
+}
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(STORE) || 'null'); }
+  catch (_) { return null; }
+}
+
+function save(pairing) {
+  try { localStorage.setItem(STORE, JSON.stringify(pairing)); } catch (_) { /* private mode */ }
+}
+
+/* -------------------------------------------------------------- crypto */
+
+function b64urlToBytes(s) {
+  const padded = s.replace(/-/g, '+').replace(/_/g, '/')
+    + '='.repeat((4 - s.length % 4) % 4);
+  return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
+}
+
+async function importKey(k, usages) {
+  return crypto.subtle.importKey('raw', b64urlToBytes(k), 'AES-GCM', false,
+                                 usages || ['encrypt']);
+}
+
+async function decrypt(b64, k) {
+  const key = await importKey(k, ['decrypt']);
+  const raw = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const plain = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: raw.slice(0, 12) }, key, raw.slice(12));
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+
+async function encrypt(payload, k) {
+  const key = await importKey(k);
+  const nonce = crypto.getRandomValues(new Uint8Array(12));
+  const blob = new Uint8Array(await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv: nonce }, key, new TextEncoder().encode(JSON.stringify(payload))));
+  const joined = new Uint8Array(nonce.length + blob.length);
+  joined.set(nonce); joined.set(blob, nonce.length);
+  let binary = '';
+  for (const b of joined) binary += String.fromCharCode(b);
+  return btoa(binary);
+}
+
+/* --------------------------------------------------------------- queue */
+
+/* Captures are held locally until the relay confirms them, so a tap on a bad
+   connection is never a lost capture — the point of the whole feature. */
+function outbox() {
+  try { return JSON.parse(localStorage.getItem(OUTBOX) || '[]'); }
+  catch (_) { return []; }
+}
+function setOutbox(items) {
+  try { localStorage.setItem(OUTBOX, JSON.stringify(items.slice(-50))); } catch (_) {}
+}
+
+async function push(payload, pairing) {
+  const body = {
+    action: 'push',
+    address: pairing.address,
+    payload: await encrypt(payload, pairing.key),
+  };
+  const resp = await fetch(RELAY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: ANON,
+               Authorization: 'Bearer ' + ANON },
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) {
+    const detail = await resp.json().catch(() => ({}));
+    throw new Error(detail.error || ('HTTP ' + resp.status));
+  }
+}
+
+/* What's due, left here by the computer. Reading it needs no laptop awake —
+   that's the point: deadlines are the thing you most need when you're away
+   from your desk and the machine is shut. */
+async function fetchDigest(pairing) {
+  const resp = await fetch(RELAY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: ANON,
+               Authorization: 'Bearer ' + ANON },
+    body: JSON.stringify({ action: 'get_digest', address: pairing.address }),
+  });
+  if (!resp.ok) return null;
+  const { digest, updated_at } = await resp.json();
+  if (!digest) return null;
+  try { return { ...(await decrypt(digest, pairing.key)), updated_at }; }
+  catch (_) { return null; }   // paired against an older key
+}
+
+async function flushOutbox(pairing) {
+  const pending = outbox();
+  if (!pending.length) return 0;
+  const left = [];
+  let sent = 0;
+  for (const item of pending) {
+    try { await push(item, pairing); sent++; }
+    catch (_) { left.push(item); }
+  }
+  setOutbox(left);
+  return sent;
+}
+
+/* ----------------------------------------------------------------- ui */
+
+function renderSetup() {
+  $('sub').textContent = 'Not paired with a computer yet.';
+  main().innerHTML = `
+    <div class="setup">
+      <strong>Scan the pairing code first</strong>
+      <ol>
+        <li>Open Argus on your computer.</li>
+        <li>Click <strong>📱 Phone</strong> in the header.</li>
+        <li>Scan the code it shows with this phone's camera.</li>
+      </ol>
+    </div>
+    <p class="note">Pairing puts a key on this phone that only your computer
+      has. Everything you send is encrypted here before it leaves, so the
+      server that holds it while your laptop is asleep cannot read it.</p>`;
+}
+
+function renderCapture(pairing) {
+  const pending = outbox().length;
+  main().innerHTML = `
+    <textarea id="text" placeholder="Paste a link, or the text of an advert…"></textarea>
+    <div class="row">
+      <button id="send">Send</button>
+      <button class="ghost" id="photo">Photo</button>
+    </div>
+    <input type="file" id="file" accept="image/*">
+    <p id="msg">${pending ? `<span class="queued">${pending} waiting to send</span>` : ''}</p>
+    <section id="due"></section>
+    <p class="note">Encrypted on this phone before it leaves. It waits for your
+      computer — which can be asleep, or off — and lands in Argus when it next
+      runs. Add this page to your home screen to keep it one tap away.</p>`;
+
+  const msg = $('msg');
+  const say = (text, cls) => { msg.className = cls || ''; msg.textContent = text; };
+
+  $('send').onclick = async () => {
+    const text = $('text').value.trim();
+    if (!text) return say('Paste something first.', 'err');
+    const url = (text.match(/https?:\/\/\S+/) || [])[0];
+    await send(url ? { kind: 'url', url } : { kind: 'text', text }, 'Sent ✓');
+  };
+
+  $('photo').onclick = () => $('file').click();
+  $('file').onchange = async () => {
+    const file = $('file').files[0];
+    if (!file) return;
+    if (file.size > 500 * 1024) say('Compressing…');
+    const data = await downscale(file);
+    await send({ kind: 'image', data }, 'Photo sent ✓');
+    $('file').value = '';
+  };
+
+  async function send(payload, okText) {
+    $('send').disabled = $('photo').disabled = true;
+    say('Sending…');
+    try {
+      await push(payload, pairing);
+      say(okText, 'ok');
+      $('text').value = '';
+    } catch (err) {
+      // Held locally rather than lost; it goes out on the next attempt.
+      setOutbox([...outbox(), payload]);
+      say('Saved — will send when you have signal.', 'err');
+    }
+    $('send').disabled = $('photo').disabled = false;
+  }
+}
+
+function renderDue(digest) {
+  const box = $('due');
+  if (!box || !digest || !digest.due || !digest.due.length) return;
+  const when = (d) => d.days === 0 ? 'today'
+    : d.days === 1 ? 'tomorrow' : `in ${d.days} days`;
+  const urgent = digest.due.filter(d => d.days <= 3).length;
+  box.innerHTML = `
+    <div class="setup">
+      <strong>Closing soon${urgent ? ` · ${urgent} urgent` : ''}</strong>
+      <ol>${digest.due.slice(0, 6).map(d => `
+        <li${d.days <= 3 ? ' style="color:var(--amber)"' : ''}>
+          ${escapeHtml(d.title)}${d.company ? ' — ' + escapeHtml(d.company) : ''}
+          · <strong>${when(d)}</strong></li>`).join('')}
+      </ol>
+    </div>`;
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"]/g,
+    c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+/* Posters photographed at full resolution are several megabytes; the relay
+   caps a message well below that and the extraction gains nothing from the
+   extra pixels. */
+async function downscale(file) {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+  return dataUrl.split(',')[1];
+}
+
+/* -------------------------------------------------------------- start */
+
+(async function start() {
+  const fromQr = readPairingFromFragment();
+  if (fromQr) {
+    save(fromQr);
+    // Clear the key out of the address bar so it isn't left in history or
+    // shoulder-surfed off the screen.
+    history.replaceState(null, '', location.pathname);
+  }
+  const pairing = fromQr || load();
+  if (!pairing) return renderSetup();
+
+  renderCapture(pairing);
+  const sent = await flushOutbox(pairing);
+  if (sent) {
+    const msg = $('msg');
+    msg.className = 'ok';
+    msg.textContent = `${sent} queued capture${sent === 1 ? '' : 's'} sent ✓`;
+  }
+  renderDue(await fetchDigest(pairing));
+})();
+</script>
+</body>
+</html>
