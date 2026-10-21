@@ -371,7 +371,7 @@ async function loadTab() {
     const sessionsSince = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
     const none = Promise.resolve({ data: [] });
 
-    const [testers, telemetry, errors, feedback, events, sessions, milestones] = await Promise.all([
+    const [testers, telemetry, errors, feedback, events, sessions, milestones, requests] = await Promise.all([
       sb.from('testers').select('*, devices(id, os, app_version, last_seen_at)').order('created_at', { ascending: false }),
       sb.from('telemetry_daily').select('*').gte('day', since).order('day'),
       sb.from('error_daily').select('*').gte('day', since),
@@ -379,11 +379,12 @@ async function loadTab() {
       wantsBehaviour ? sb.from('events_daily').select('*').gte('day', since) : none,
       wantsBehaviour ? sb.from('sessions_daily').select('*').gte('day', sessionsSince) : none,
       wantsBehaviour ? sb.from('milestones').select('*') : none,
+      tab === 'testers' ? sb.from('invite_requests').select('*').order('created_at', { ascending: false }).limit(200) : none,
     ]);
-    for (const r of [testers, telemetry, errors, feedback, events, sessions, milestones]) if (r.error) throw r.error;
+    for (const r of [testers, telemetry, errors, feedback, events, sessions, milestones, requests]) if (r.error) throw r.error;
     cache = { testers: testers.data, telemetry: telemetry.data, errors: errors.data,
               feedback: feedback.data, events: events.data, sessions: sessions.data,
-              milestones: milestones.data };
+              milestones: milestones.data, requests: requests.data };
     ({ testers: vTesters, retention: vRetention, activation: vActivation, rhythm: vRhythm,
        people: vPeople, activity: vActivity, usage: vUsage, funnel: vFunnel,
        errors: vErrors, feedback: vFeedback, broadcast: vBroadcast })[tab]();
@@ -702,8 +703,10 @@ const rnd = (n) => {
 // function matches whatever is stored against the tester.
 const newCode = () => `ARGUS-${rnd(4)}-${rnd(4)}`;
 
+// Kept in step with inviteText() in supabase/functions/request-invite: no
+// security-warning walkthrough in the mail (it read as phishing), one link.
 function inviteMessage(code, name) {
-  return `Hi ${name || 'there'},\n\nYou're in the Argus private beta!\n\nArgus is my app for tracking jobs, scholarships and programmes, so you never miss a deadline. See what it does here: https://teofilusshaduka.github.io/opportunity-tracker-releases/\n\n1. Download it for Mac or Windows from that page.\n   (macOS: right-click the app and choose Open the first time. Windows: if SmartScreen appears, click "More info" then "Run anyway". The build isn't code-signed yet; that's expected during the beta.)\n2. Open it and enter your personal invite code: ${code}\n3. That's it. The app walks you through the rest.\n\nYour code is personal, please don't share it or the app with anyone.\n\nBreak things and tell me about them via the Feedback button!\n\nTeo`;
+  return `Hi ${name || 'there'},\n\nThanks for asking about Argus. You're in.\n\nYour personal access code is:\n${code}\n\nYou can get the app for Mac or Windows here, with a short note on opening it the first time:\nhttps://teofilusshaduka.github.io/opportunity-tracker-releases/#get\n\nOpen Argus, enter the code, and it walks you through the rest. The code is tied to you, so please keep it to yourself.\n\nIf anything breaks or confuses you, just reply to this email. I read every one.\n\nTeo`;
 }
 
 function vTesters() {
@@ -726,6 +729,7 @@ function vTesters() {
       <button class="primary" id="inv-go">Create invite code</button>
       <div id="inv-out"></div>
     </div>
+    ${requestsCard()}
     <div class="card scroll">
       <h2>Testers</h2>
       <table><thead><tr><th>Tester</th><th>Code</th><th>Status</th><th>Devices</th><th>Last seen</th><th></th></tr></thead>
@@ -764,6 +768,8 @@ function vTesters() {
       status: 'invited', devices: [], created_at: new Date().toISOString() });
   };
 
+  bindRequestsCard();
+
   view().querySelectorAll('[data-revoke]').forEach(b => b.onclick = async () => {
     if (!confirm('Revoke this tester? Their app locks within a day (data stays on their device).')) return;
     await sb.from('testers').update({ status: 'revoked', revoked_at: new Date().toISOString() }).eq('id', b.dataset.revoke);
@@ -777,6 +783,58 @@ function vTesters() {
   });
   view().querySelectorAll('[data-copy]').forEach(b => b.onclick = () =>
     navigator.clipboard.writeText(inviteMessage(b.dataset.copy, b.dataset.name)));
+}
+
+/* Site requests answer themselves through the request-invite edge function:
+   it mints a code and mails it. This card is the record of that, plus the one
+   lever left — draining whatever the daily mail cap held back. */
+function requestsCard() {
+  const r = cache.requests || [];
+  const day = new Date(Date.now() - 864e5).toISOString();
+  const today = r.filter(x => x.created_at >= day);
+  const waiting = r.filter(x => x.status === 'queued' || x.status === 'failed');
+  const pill = { sent: 'active', resent: 'active', queued: 'invited', failed: 'revoked', ignored: 'revoked' };
+  return `<div class="card scroll">
+      <h2>Requests from the site</h2>
+      <p class="muted" style="margin-bottom:10px">Answered automatically: ${today.length} in the last 24 h,
+        ${today.filter(x => x.status === 'sent' || x.status === 'resent').length} sent.
+        ${waiting.length ? `<strong>${waiting.length} waiting</strong> (daily mail cap or a failed send).` : 'Nothing waiting.'}</p>
+      ${waiting.length ? `<button class="primary" id="req-drain">Send queued (${waiting.length})</button>
+      <div id="req-out"></div>` : ''}
+      <table><thead><tr><th>Requested by</th><th>Note</th><th>Status</th><th>When</th></tr></thead>
+      <tbody>${r.slice(0, 50).map(x => `<tr>
+        <td><strong>${esc(x.full_name || '—')}</strong><br><span class="muted">${esc(x.email)}</span></td>
+        <td class="muted">${esc(x.message || '')}</td>
+        <td><span class="pill ${pill[x.status] || ''}">${x.status}</span>${x.error ? `<br><span class="muted">${esc(x.error)}</span>` : ''}</td>
+        <td class="muted">${fmtWhen(x.created_at)}</td></tr>`).join('')
+        || '<tr><td colspan="4" class="muted">No requests yet.</td></tr>'}</tbody></table>
+    </div>`;
+}
+
+function bindRequestsCard() {
+  const btn = document.getElementById('req-drain');
+  if (!btn) return;
+  btn.onclick = async () => {
+    const out = document.getElementById('req-out');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/request-invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: ANON_KEY,
+                   Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ action: 'drain' }),
+      });
+      const j = await resp.json().catch(() => ({}));
+      if (!resp.ok || !j.success) throw new Error(j.error || `HTTP ${resp.status}`);
+      out.innerHTML = `<p class="ok">Sent ${j.sent + j.resent}, failed ${j.failed}, still waiting ${j.left}` +
+        (j.room === 0 ? ' — today’s mail cap is used up; try again tomorrow.' : '.') + '</p>';
+      setTimeout(loadTab, 1500);
+    } catch (err) {
+      out.innerHTML = `<p class="err">${esc(err.message || err)}</p>`;
+      btn.disabled = false; btn.textContent = 'Send queued';
+    }
+  };
 }
 
 /* -------------------------------------------------------- activity */

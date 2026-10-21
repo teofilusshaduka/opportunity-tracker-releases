@@ -428,8 +428,10 @@
 <section class="final" id="get"><div class="wrap reveal">
   <h2>Start catching opportunities.</h2>
   <p class="sub">Argus is invite-only while in beta. Request a code and we will get you set up.</p>
-  <!-- Invite requests go to Web3Forms, which emails them on. The access key is
-       public by design: it can only submit to this one form. -->
+  <!-- Invite requests go to the request-invite edge function, which mints a code
+       and emails it back with no human in the loop. Web3Forms stays as the
+       form's action: the fallback with JS off, or if the function is down. Its
+       access key is public by design: it can only submit to this one form. -->
   <a class="btn btn-primary" id="req-open" data-req href="mailto:principiaworks@gmail.com?subject=Argus%20beta%20access%20request">Request an invite</a>
   <form class="req" id="req" hidden action="https://api.web3forms.com/submit" method="POST">
     <input type="hidden" name="access_key" value="6624bd5a-fecd-429c-b317-894219bcaa25">
@@ -513,11 +515,13 @@
     if(win)document.getElementById('dl-win').href=win;
   }catch(e){/* keep releases-page fallback */}
 })();
-// Invite request: post to Web3Forms in place, so nobody leaves the page. With
-// JS off, the form still posts and Web3Forms shows its own thank-you page.
+// Invite request: post to request-invite, which mints a code and mails it at
+// once. If that is unreachable, fall back to Web3Forms so nothing is lost; with
+// JS off the form posts to Web3Forms directly and it shows its own thank-you.
 (function(){
   const f=document.getElementById('req'), st=f.querySelector('.req-status'), b=f.querySelector('button');
   const opener=document.getElementById('req-open');
+  const AUTO='https://rfbqgglbqmkoikgtjict.supabase.co/functions/v1/request-invite';
   // Any "Request an invite" reveals the form in place of the button.
   document.querySelectorAll('[data-req]').forEach(a=>a.addEventListener('click',e=>{
     e.preventDefault();
@@ -525,19 +529,45 @@
     f.scrollIntoView({behavior:'smooth',block:'center'});
     setTimeout(()=>f.querySelector('input[name=name]').focus({preventScroll:true}),400);
   }));
+  async function viaWeb3Forms(){
+    const r=await fetch(f.action,{method:'POST',headers:{Accept:'application/json'},body:new FormData(f)});
+    const j=await r.json();
+    if(!j.success)throw new Error(j.message||'failed');
+    return 'Thanks — your request is in. A code will follow by email.';
+  }
   f.addEventListener('submit',async e=>{
     e.preventDefault();
     b.disabled=true; st.className='req-status'; st.textContent='Sending…';
+    const d=new FormData(f);
+    let msg;
     try{
-      const r=await fetch(f.action,{method:'POST',headers:{Accept:'application/json'},body:new FormData(f)});
-      const j=await r.json();
-      if(!j.success)throw new Error(j.message||'failed');
-      f.classList.add('sent');
-      st.textContent='Thanks — your request is in. A code will follow by email.';
+      const r=await fetch(AUTO,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name:d.get('name'),email:d.get('email'),message:d.get('message'),botcheck:d.get('botcheck')})});
+      const j=await r.json().catch(()=>({}));
+      if(r.status===400&&j.error==='bad_email'){
+        b.disabled=false; st.className='req-status err';
+        st.textContent='That email address doesn’t look right — check it and try again.';
+        return;
+      }
+      if(r.status===429){
+        b.disabled=false; st.className='req-status err';
+        st.textContent='Too many requests from here just now. Try again in an hour.';
+        return;
+      }
+      if(!j.success)throw new Error(j.error||'failed');
+      msg=j.status==='queued'
+        ?'You’re on the list. Demand is high today, so your code will follow by email within a day or two.'
+        :'Done — your invite code is on its way to '+d.get('email')+'. Check spam if it isn’t there in a few minutes.';
     }catch(err){
-      b.disabled=false; st.className='req-status err';
-      st.textContent='That didn’t send. Try again, or email principiaworks@gmail.com.';
+      try{ msg=await viaWeb3Forms(); }
+      catch(err2){
+        b.disabled=false; st.className='req-status err';
+        st.textContent='That didn’t send. Try again, or email principiaworks@gmail.com.';
+        return;
+      }
     }
+    f.classList.add('sent');
+    st.textContent=msg;
   });
 })();
 // one quiet motion: fade sections in as they enter view
