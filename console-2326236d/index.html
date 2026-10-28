@@ -189,8 +189,11 @@ async function gateOnSecondFactor() {
 
   const { data: factors, error: listErr } = await sb.auth.mfa.listFactors();
   if (listErr) { await sb.auth.signOut(); return renderLogin(); }
-  const verified = (factors.totp || []).find(f => f.status === 'verified');
-  return verified ? renderChallenge(verified) : renderEnrol(factors.totp || []);
+  // listFactors().totp holds verified factors only. A half-finished
+  // enrolment is in .all and nowhere else, and renderEnrol has to see it.
+  const totp = (factors.all || []).filter(f => f.factor_type === 'totp');
+  const verified = totp.find(f => f.status === 'verified');
+  return verified ? renderChallenge(verified) : renderEnrol(totp);
 }
 
 function authShell(title, sub, body) {
@@ -325,10 +328,12 @@ function renderLogin() {
   };
 }
 
+// The gate runs from main() only. SIGNED_IN also reaches every other open
+// console tab (supabase-js broadcasts it) and fires again when a tab regains
+// focus; each of those ran a second enrolment beside the one being scanned,
+// and the loser painted "a factor with the friendly name ... already exists"
+// over the QR code. The magic link lands as a page load, so main() sees it.
 sb.auth.onAuthStateChange((event) => {
-  // Never straight to the shell: the gate re-checks assurance level, so a
-  // fresh magic-link session still has to clear its second factor.
-  if (event === 'SIGNED_IN') gateOnSecondFactor();
   if (event === 'SIGNED_OUT') renderLogin();
 });
 
